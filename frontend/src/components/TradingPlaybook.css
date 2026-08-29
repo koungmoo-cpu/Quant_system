@@ -1,0 +1,146 @@
+.playbook-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.playbook-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.playbook-panel {
+  position: fixed;
+  top: 0;
+  right: -500px;
+  width: 100%;
+  max-width: 500px;
+  height: 100%;
+  background-color: #ffffff;
+  z-index: 1001;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  transition: right 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.playbook-panel.open {
+  right: 0;
+}
+
+.playbook-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background-color: #1e293b;
+  color: #ffffff;
+}
+
+.playbook-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.playbook-content {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.principle-box {
+  background-color: #fef9c3;
+  border: 1px solid #fef08a;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  color: #854d0e;
+}
+
+.principle-box h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+}
+
+.principle-box p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.track-box {
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.track-box h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+}
+
+.track-desc {
+  margin-bottom: 15px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.track-box ul {
+  padding-left: 20px;
+  margin: 0;
+}
+
+.track-box li {
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.track-box li:last-child {
+  margin-bottom: 0;
+}
+
+/* Blue theme for Minervini */
+.track-minervini {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+.track-minervini h3 { color: #1e3a8a; }
+.track-minervini .highlight {
+  background-color: #dbeafe;
+  color: #1e40af;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+/* Red theme for Qullamaggie */
+.track-qullamaggie {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+}
+.track-qullamaggie h3 { color: #7f1d1d; }
+.track-qullamaggie .highlight {
+  background-color: #fee2e2;
+  color: #991b1b;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+}

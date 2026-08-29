@@ -1,0 +1,142 @@
+.portfolio-container {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-top: 20px;
+}
+
+.portfolio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.portfolio-header h2 {
+  margin: 0;
+  color: #1f2937;
+}
+
+.portfolio-summary {
+  display: flex;
+  gap: 24px;
+  background: #f8fafc;
+  padding: 16px 24px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.summary-label {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.summary-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.add-btn {
+  background-color: #10b981;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-btn:hover:not(:disabled) {
+  background-color: #059669;
+}
+
+.portfolio-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.portfolio-table th {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 2px solid #e5e7eb;
+  color: #4b5563;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.portfolio-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #1f2937;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.ticker-col {
+  font-weight: 700;
+  color: #4f46e5 !important;
+}
+
+.portfolio-table input {
+  width: 100%;
+  min-width: 80px;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+}
+
+.portfolio-table input[type="date"] {
+  min-width: 135px;
+}
+
+.edit-btn, .save-btn, .cancel-btn, .delete-btn {
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  margin-right: 8px;
+}
+
+.edit-btn { background-color: #f3f4f6; color: #4b5563; }
+.edit-btn:hover { background-color: #e5e7eb; }
+
+.delete-btn { background-color: #fee2e2; color: #ef4444; }
+.delete-btn:hover { background-color: #fecaca; }
+
+.save-btn { background-color: #4f46e5; color: white; }
+.save-btn:hover { background-color: #4338ca; }
+
+.cancel-btn { background-color: #f3f4f6; color: #4b5563; }
+.cancel-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.profit-text {
+  color: #ef4444; /* Korean market standard: Red is profit */
+  font-weight: 600;
+}
+
+.loss-text {
+  color: #3b82f6; /* Korean market standard: Blue is loss */
+  font-weight: 600;
+}
+
+.no-data {
+  text-align: center;
+  color: #6b7280;
+  padding: 32px !important;
+}

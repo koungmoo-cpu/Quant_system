@@ -1,0 +1,296 @@
+.stock-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  background-color: white;
+  transition: all 0.2s ease-in-out;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.stock-card:hover {
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.highlight-buy {
+  border-left: 4px solid #10b981;
+}
+
+.highlight-power-play {
+  border-left: 4px solid #f59e0b;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.2); }
+  50% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.6); }
+  100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.2); }
+}
+
+.stock-card-header {
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  background-color: #f9fafb;
+}
+
+.stock-card-header:hover {
+  background-color: #f3f4f6;
+}
+
+.stock-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.ticker-row {
+  display: flex;
+  align-items: center;
+}
+
+.ticker {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  margin-right: 12px;
+}
+
+.star-toggle {
+  cursor: pointer;
+  font-size: 1.3rem;
+  margin-right: 6px;
+  user-select: none;
+  transition: transform 0.1s;
+}
+
+.star-toggle:hover {
+  transform: scale(1.2);
+}
+
+.strategy {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 6px;
+}
+
+.strategy-badge {
+  background-color: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.company-name {
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.stock-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.action-badge {
+  color: white;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.price {
+  font-weight: 600;
+  color: #374151;
+  min-width: 70px;
+  text-align: right;
+}
+
+.expand-icon {
+  color: #9ca3af;
+  font-size: 0.75rem;
+}
+
+.remove-btn {
+  font-size: 1.1rem;
+  margin-left: 8px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.remove-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.stock-card-details {
+  padding: 16px;
+  border-top: 1px solid #e5e7eb;
+  animation: slideDown 0.3s ease-out;
+}
+
+.ai-briefing h4 {
+  margin: 0 0 8px 0;
+  color: #4f46e5;
+  font-size: 0.95rem;
+}
+
+.ai-briefing ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #4b5563;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.price-targets {
+  display: flex;
+  gap: 24px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #e5e7eb;
+}
+
+.target {
+  display: flex;
+  flex-direction: column;
+}
+
+.target .label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #6b7280;
+  letter-spacing: 0.05em;
+}
+
+.target .value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.success { color: #10b981; }
+.danger { color: #ef4444; }
+
+.mobile-only {
+  display: none;
+}
+
+/* -------------------------------------
+   RESPONSIVE DESIGN (MOBILE)
+--------------------------------------*/
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .mobile-only {
+    display: flex;
+  }
+  
+  .stock-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .stock-info {
+    width: 100%;
+  }
+
+  .ticker-row {
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  
+  .ticker {
+    margin-right: auto;
+  }
+  
+  .remove-btn.mobile-only {
+    margin-left: 12px;
+  }
+  
+  .strategy {
+    display: block;
+    margin-bottom: 16px;
+  }
+
+  .mobile-price-row {
+    display: flex;
+    justify-content: space-between;
+    background-color: #f3f4f6;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+
+  .mobile-price-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+  }
+  
+  .mobile-price-item:first-child {
+    border-right: 1px solid #e5e7eb;
+  }
+
+  .m-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .m-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  .text-blue { color: #2563eb; }
+  .text-red { color: #dc2626; }
+
+  .mobile-expand {
+    justify-content: center;
+    width: 100%;
+    padding-top: 8px;
+    color: #6b7280;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  /* 모바일에서 아코디언 박스 꽉 차게 */
+  .stock-card-details {
+    padding: 12px;
+  }
+
+  .order-ticket {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
