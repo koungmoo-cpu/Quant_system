@@ -74,7 +74,9 @@ function App() {
           entryPivot: p.entry_pivot,
           score: p.score,
           detected_at: p.detected_at,
-          detected_price: p.detected_price
+          detected_price: p.detected_price,
+          is_new: p.is_new,
+          streak_days: p.streak_days
         };
         map.set(p.ticker, mapped);
       });
