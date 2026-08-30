@@ -184,12 +184,18 @@ const PortfolioTable: React.FC = () => {
                   />
                 </td>
                 <td>
-                  <input 
-                    type="text" 
-                    value={editForm.Strategy || ''} 
+                  <select 
+                    value={editForm.Strategy || 'Manual'} 
                     onChange={e => setEditForm({ ...editForm, Strategy: e.target.value })} 
-                    placeholder="e.g. Breakout"
-                  />
+                  >
+                    <option value="Manual">Manual</option>
+                    <option value="Breakout">Breakout</option>
+                    <option value="Power Play">Power Play</option>
+                    <option value="Episodic Pivot">Episodic Pivot</option>
+                    <option value="Pullback">Pullback</option>
+                    <option value="Reversal">Reversal</option>
+                    <option value="Trend Following">Trend Following</option>
+                  </select>
                 </td>
                 <td>
                   <input 
@@ -245,11 +251,18 @@ const PortfolioTable: React.FC = () => {
                     <>
                       <td>{asset.Ticker}</td>
                       <td>
-                        <input 
-                          type="text" 
-                          value={editForm.Strategy || ''} 
+                        <select 
+                          value={editForm.Strategy || 'Manual'} 
                           onChange={e => setEditForm({ ...editForm, Strategy: e.target.value })} 
-                        />
+                        >
+                          <option value="Manual">Manual</option>
+                          <option value="Breakout">Breakout</option>
+                          <option value="Power Play">Power Play</option>
+                          <option value="Episodic Pivot">Episodic Pivot</option>
+                          <option value="Pullback">Pullback</option>
+                          <option value="Reversal">Reversal</option>
+                          <option value="Trend Following">Trend Following</option>
+                        </select>
                       </td>
                       <td>
                         <input 
