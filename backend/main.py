@@ -371,6 +371,63 @@ def analyze_ticker(ticker: str):
         "ret_20d": setup_data.get('ret_20d', 0)
     }
 
+
+@app.get("/api/analyze-fast/{ticker}")
+def analyze_ticker_fast(ticker: str):
+    ticker = ticker.upper()
+    
+    setup_data = master_strategy_analyzer(ticker)
+    strategy_name = setup_data.get('strategy', 'No Setup (관망)')
+    
+    try:
+        t_data = market_fetcher.fetch_data([ticker])
+        if ticker in t_data and not t_data[ticker].empty:
+            df = t_data[ticker]
+            try:
+                current_price = float(df['Close'].iloc[-1])
+            except TypeError:
+                current_price = float(df['Close'].iloc[-1].iloc[0])
+        else:
+            current_price = 0.0
+    except Exception:
+        current_price = 0.0
+        
+    stop_loss = setup_data.get('stop_loss') or (current_price * 0.95)
+    entry_pivot = setup_data.get('entry_pivot')
+    
+    if 'No Setup' in strategy_name or strategy_name == 'Data Error':
+        action = "WAIT"
+        details_list = setup_data.get('details', [])
+        summary_lines = []
+        if 'Low Volatility/Stable' in strategy_name:
+            summary_lines.append("⚠️ 사전 변동성/유동성 필터 미달")
+        else:
+            summary_lines.append("⚠️ 모든 매매 셋업 조건 미달")
+        summary_lines.extend(details_list)
+    else:
+        action = "BUY"
+        matched_detail = setup_data.get('details', [])[-1] if setup_data.get('details') else ""
+        summary_lines = [f"✅ 조건 통과: {matched_detail}", "⚡ AI 요약 없는 빠른 퀀트 분석 결과입니다."]
+        
+    universe_list = db.get_universe()
+    ticker_name_map = {u["ticker"]: u.get("name", u["ticker"]) for u in universe_list if "ticker" in u}
+    
+    return {
+        "ticker": ticker,
+        "name": ticker_name_map.get(ticker, ticker),
+        "strategy": strategy_name,
+        "action": action,
+        "summary": summary_lines,
+        "stopLoss": round(stop_loss, 2),
+        "targetPrice": round(current_price * 1.15, 2),
+        "currentPrice": round(current_price, 2),
+        "entryPivot": round(entry_pivot, 2) if entry_pivot else None,
+        "score": setup_data.get('score', 0),
+        "ret_5d": setup_data.get('ret_5d', 0),
+        "ret_10d": setup_data.get('ret_10d', 0),
+        "ret_20d": setup_data.get('ret_20d', 0)
+    }
+
 class PortfolioItemReq(BaseModel):
     ticker: str
     quantity: int
