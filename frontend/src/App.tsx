@@ -16,6 +16,7 @@ function App() {
     watchlist, 
     isAnalyzing, 
     analyzeTicker, 
+    analyzeTickerFast,
     initializeFavorites, 
     fetchOwnedAssets, 
     isScanning, 
@@ -43,6 +44,13 @@ function App() {
     e.preventDefault();
     if (searchQuery.trim()) {
       analyzeTicker(searchQuery.trim());
+    }
+  };
+
+  const handleAnalyzeFast = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      analyzeTickerFast(searchQuery.trim());
     }
   };
 
@@ -190,14 +198,19 @@ function App() {
             <form onSubmit={handleAnalyze} className="search-form">
               <input 
                 type="text" 
-                placeholder="티커 검색 (예: TSLA) 후 Enter로 분석" 
+                placeholder="티커 검색 (예: TSLA)" 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 disabled={isAnalyzing || isScanning}
               />
-              <button type="submit" disabled={isAnalyzing || isScanning} className="analyze-btn">
-                {isAnalyzing ? '분석 중...' : 'AI 분석'}
-              </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button type="button" onClick={handleAnalyzeFast} disabled={isAnalyzing || isScanning} className="analyze-btn" style={{ backgroundColor: '#10b981' }}>
+                  {isAnalyzing ? '분석 중...' : '⚡ 빠른 퀀트 분석'}
+                </button>
+                <button type="submit" disabled={isAnalyzing || isScanning} className="analyze-btn">
+                  {isAnalyzing ? '분석 중...' : '🤖 AI 심층 분석'}
+                </button>
+              </div>
             </form>
             
           </div>

@@ -88,6 +88,7 @@ interface TradingState {
   
   isAnalyzing: boolean;
   analyzeTicker: (ticker: string) => Promise<void>;
+  analyzeTickerFast: (ticker: string) => Promise<void>;
   
   isScanning: boolean;
   runGlobalScan: () => Promise<void>;
@@ -246,7 +247,47 @@ export const useStore = create<TradingState>((set, get) => ({
       set({ isAnalyzing: false });
     }
   },
-  
+  analyzeTickerFast: async (ticker: string) => {
+    if (!ticker) return;
+    set({ isAnalyzing: true });
+    try {
+      const res = await fetch(`${API_BASE}/api/analyze-fast/${ticker.toUpperCase()}`);
+      if (!res.ok) {
+        alert(`Failed to fetch data for ${ticker}. Ensure the ticker is valid.`);
+        set({ isAnalyzing: false });
+        return;
+      }
+      const data: StockItem = await res.json();
+      
+      const currentPortfolio = get().portfolio;
+      const existsIdx = currentPortfolio.findIndex(p => p.ticker === data.ticker);
+      let newPortfolio = [...currentPortfolio];
+      
+      if (existsIdx >= 0) {
+        const oldName = currentPortfolio[existsIdx].name;
+        if (oldName && oldName !== data.ticker && (!data.name || data.name === data.ticker)) {
+            data.name = oldName;
+        }
+        newPortfolio[existsIdx] = data;
+      } else {
+        newPortfolio = [data, ...newPortfolio];
+      }
+      
+      newPortfolio.sort((a, b) => (b.score || 0) - (a.score || 0));
+      set({ portfolio: newPortfolio, filter: 'ALL', searchQuery: '' });
+      
+    } catch (e: any) {
+      console.error("Error analyzing ticker fast:", e);
+      if (e.name === 'TypeError' && e.message.includes('fetch')) {
+        alert('백엔드 서버에 연결할 수 없습니다. 백엔드 서버(FastAPI)가 실행 중인지 확인해주세요.');
+      } else {
+        alert('분석 중 오류가 발생했습니다. 존재하지 않는 티커이거나 서버 오류일 수 있습니다.');
+      }
+    } finally {
+      set({ isAnalyzing: false });
+    }
+  },
+
   isScanning: false,
   runGlobalScan: async () => {
     set({ isScanning: true });
