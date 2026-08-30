@@ -9,36 +9,33 @@ interface Props {
 const StockCard: React.FC<Props> = ({ stock }) => {
   const [expanded, setExpanded] = useState(false);
   const [livePrice, setLivePrice] = useState<number | null>(null);
-  const [briefingData, setBriefingData] = useState<StockItem | null>(null);
-  const [isLoadingBriefing, setIsLoadingBriefing] = useState(false);
+  const [aiInsightData, setAiInsightData] = useState<string[] | null>(null);
+  const [isLoadingInsight, setIsLoadingInsight] = useState(false);
 
-  const handleExpand = async () => {
-    const newExpanded = !expanded;
-    setExpanded(newExpanded);
-
-    if (newExpanded && !briefingData) {
-      const summaryStr = (stock.summary || []).join(' ');
-      const needsBriefing = summaryStr.includes('대시보드 상단') || summaryStr.includes('스캐너 자동 탐지') || (stock.summary || []).length <= 2;
-      
-      if (needsBriefing) {
-        setIsLoadingBriefing(true);
-        try {
-          const API_BASE = 'https://ai-stock-backend-108832568469.asia-northeast3.run.app';
-          const res = await fetch(`${API_BASE}/api/analyze/${stock.ticker}`);
-          if (res.ok) {
-            const data = await res.json();
-            setBriefingData(data);
-          }
-        } catch(e) {
-          console.error(e);
-        } finally {
-          setIsLoadingBriefing(false);
-        }
+  const handleExpand = () => {
+    setExpanded(!expanded);
+  };
+  
+  const handleRequestInsight = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsLoadingInsight(true);
+    try {
+      const API_BASE = 'https://ai-stock-backend-108832568469.asia-northeast3.run.app';
+      const res = await fetch(`${API_BASE}/api/ai-catalyst-insight/${stock.ticker}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAiInsightData(data.summary || []);
       }
+    } catch(e) {
+      console.error(e);
+      setAiInsightData(["AI 분석 중 오류가 발생했습니다."]);
+    } finally {
+      setIsLoadingInsight(false);
+      setExpanded(true);
     }
   };
   
-  const displayStock = { ...stock, ...(briefingData || {}) };
+  const displayStock = stock;
   
   React.useEffect(() => {
     if (displayStock.currentPrice === 0 && !livePrice) {

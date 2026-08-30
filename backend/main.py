@@ -237,61 +237,41 @@ def scan_universe():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/analyze/{ticker}")
-def analyze_ticker(ticker: str):
+@app.get("/api/ai-catalyst-insight/{ticker}")
+def get_ai_catalyst_insight(ticker: str):
     ticker = ticker.upper()
-    
-    # 1. 룰 기반 마스터 라우터로 셋업 1차 판별
-    setup_data = master_strategy_analyzer(ticker)
-    strategy_name = setup_data.get('strategy', 'No Setup (관망)')
-    
-    # 현재가 가져오기 (마스터 라우터에서 실패했을 경우 대비)
+    api_key = settings.google_genai_api_key
+    if not api_key:
+        return {"summary": ["API Key가 설정되지 않아 AI 분석을 건너뜁니다."]}
+        
     try:
-        t_data = market_fetcher.fetch_data([ticker])
-        if ticker in t_data and not t_data[ticker].empty:
-            df = t_data[ticker]
-            try:
-                current_price = float(df['Close'].iloc[-1])
-            except TypeError:
-                current_price = float(df['Close'].iloc[-1].iloc[0])
-        else:
-            current_price = 0.0
-    except Exception:
-        current_price = 0.0
+        client = genai.Client(api_key=api_key)
+        prompt = f"""
+당신은 월스트리트의 엘리트 퀀트 애널리스트입니다. 
+주식 {ticker}에 대한 최신 뉴스, 테마, 실적(Earnings) 이슈, 거시경제적 촉매제(Catalyst)를 바탕으로,
+이 주식이 왜 현재 시장의 주목을 받고 있거나 급등/급락하고 있는지 스토리 위주로 3~4줄로 요약해주세요.
+
+주의사항: 
+- 차트 셋업이나 매수가/손절가 같은 기술적 분석 수치는 절대 언급하지 마세요. (이미 시스템이 계산했습니다)
+- 오직 뉴스, 펀더멘털, 테마, 호재/악재 등 '왜(Why)'에만 집중하세요.
+- 답변은 마크다운 불릿 포인트(- ) 형태로만 작성해주세요.
+"""
+        response = client.models.generate_content(
+            model="gemini-3.6-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.4
+            )
+        )
         
-    stop_loss = setup_data.get('stop_loss') or (current_price * 0.95)
-    entry_pivot = setup_data.get('entry_pivot')
-    
-    # 2. 적합하지 않은 셋업이면 AI 호출 패스 (비용 및 속도 최적화)
-    if 'No Setup' in strategy_name or strategy_name == 'Data Error':
-        details_list = setup_data.get('details', [])
+        lines = response.text.strip().split('
+')
+        clean_lines = [line.strip().lstrip('-').strip() for line in lines if line.strip()]
         
-        # 탈락 이유가 여러 개인 경우를 위한 요약 라인 구성
-        summary_lines = []
-        if 'Low Volatility/Stable' in strategy_name:
-            summary_lines.append("⚠️ 사전 변동성/유동성 필터 미달")
-        else:
-            summary_lines.append("⚠️ 모든 매매 셋업 조건 미달")
-            
-        summary_lines.extend(details_list)
-        
-        universe_list = db.get_universe()
-        ticker_name_map = {u["ticker"]: u.get("name", u["ticker"]) for u in universe_list if "ticker" in u}
-        return {
-            "ticker": ticker,
-            "name": ticker_name_map.get(ticker, ticker),
-            "strategy": strategy_name,
-            "action": "WAIT",
-            "summary": summary_lines,
-            "stopLoss": round(stop_loss, 2),
-            "targetPrice": round(current_price * 1.15, 2),
-            "currentPrice": round(current_price, 2),
-                        "entryPivot": round(entry_pivot, 2) if entry_pivot else None,
-            "score": setup_data.get('score', 0),
-            "ret_5d": setup_data.get('ret_5d', 0),
-            "ret_10d": setup_data.get('ret_10d', 0),
-            "ret_20d": setup_data.get('ret_20d', 0)
-        }
+        return {"summary": clean_lines}
+    except Exception as e:
+        print(f"AI Error for {ticker}: {e}")
+        return {"summary": ["AI 분석 중 오류가 발생했습니다.", str(e)]}
         
     # 3. 적합한 셋업이면 Gemini AI로 최종 브리핑 및 액션 결정 (JSON 포맷 강제)
     action = "WAIT"

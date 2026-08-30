@@ -43,13 +43,6 @@ function App() {
   const handleAnalyze = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      analyzeTicker(searchQuery.trim());
-    }
-  };
-
-  const handleAnalyzeFast = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
       analyzeTickerFast(searchQuery.trim());
     }
   };
@@ -198,19 +191,14 @@ function App() {
             <form onSubmit={handleAnalyze} className="search-form">
               <input 
                 type="text" 
-                placeholder="티커 검색 (예: TSLA)" 
+                placeholder="티커 검색 (예: TSLA) 후 Enter로 빠른 스캔" 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 disabled={isAnalyzing || isScanning}
               />
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button type="button" onClick={handleAnalyzeFast} disabled={isAnalyzing || isScanning} className="analyze-btn" style={{ backgroundColor: '#10b981' }}>
-                  {isAnalyzing ? '분석 중...' : '⚡ 빠른 퀀트 분석'}
-                </button>
-                <button type="submit" disabled={isAnalyzing || isScanning} className="analyze-btn">
-                  {isAnalyzing ? '분석 중...' : '🤖 AI 심층 분석'}
-                </button>
-              </div>
+              <button type="submit" disabled={isAnalyzing || isScanning} className="analyze-btn" style={{ backgroundColor: '#10b981' }}>
+                {isAnalyzing ? '분석 중...' : '🔍 종목 스캔'}
+              </button>
             </form>
             
           </div>
@@ -268,7 +256,7 @@ function App() {
                    className="scan-btn"
                    style={{ marginBottom: '12px' }}
                  >
-                   {isScanning ? '⏳ 관심종목 스캔 중...' : '✨ 관심종목 전체 AI 스캔'}
+                   {isScanning ? '⏳ 관심종목 스캔 중...' : '🔍 관심종목 전체 스캔'}
                  </button>
                  <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
                    🕒 전체 스캔 업데이트: {scanTimestamp || '이력 없음'}

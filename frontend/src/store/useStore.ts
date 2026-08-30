@@ -292,7 +292,7 @@ export const useStore = create<TradingState>((set, get) => ({
   runGlobalScan: async () => {
     set({ isScanning: true });
     try {
-      const res = await fetch(`${API_BASE}/api/watchlist/scan`);
+      const res = await fetch(`${API_BASE}/api/watchlist/scan-fast`);
       if (!res.ok) {
         alert('관심종목 스캔 중 오류가 발생했습니다.');
         set({ isScanning: false });
