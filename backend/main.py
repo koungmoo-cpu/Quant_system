@@ -264,8 +264,7 @@ def get_ai_catalyst_insight(ticker: str):
             )
         )
         
-        lines = response.text.strip().split('
-')
+        lines = response.text.strip().split('\n')
         clean_lines = [line.strip().lstrip('-').strip() for line in lines if line.strip()]
         
         return {"summary": clean_lines}
