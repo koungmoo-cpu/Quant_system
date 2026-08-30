@@ -320,6 +320,7 @@ export const useStore = create<TradingState>((set, get) => ({
           Quantity: Number(a.Quantity || a.quantity || a['수량'] || 0),
           AvgPrice: Number(a.AvgPrice || a.avgPrice || a['Avg Price'] || a['매수가'] || a['평균단가'] || 0),
           PurchaseDate: String(a.PurchaseDate || a.purchaseDate || a['Purchase Date'] || a['매수일'] || ''),
+          Strategy: String(a.Strategy || a.strategy || 'Manual'),
           CurrentPrice: Number(a.CurrentPrice || 0),
           trailingStop: Number(a.trailingStop || 0),
           ma20: Number(a.ma20 || 0)
@@ -341,7 +342,8 @@ export const useStore = create<TradingState>((set, get) => ({
           ticker: asset.Ticker,
           quantity: asset.Quantity,
           avgPrice: asset.AvgPrice,
-          purchaseDate: asset.PurchaseDate
+          purchaseDate: asset.PurchaseDate,
+          strategy: asset.Strategy
         })
       });
       if (res.ok) {

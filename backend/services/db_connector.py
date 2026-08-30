@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 import pytz
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 from google.cloud import firestore
 
 class DBConnector:
@@ -149,17 +149,20 @@ class DBConnector:
         batch.commit()
 
 
-    def update_portfolio_item(self, ticker: str, quantity: int, avgPrice: float, purchaseDate: str) -> str:
+    def update_portfolio_item(self, ticker: str, quantity: int, avgPrice: float, purchaseDate: str, strategy: Optional[str] = None) -> str:
         if not self.db: return "error: no db"
         try:
             doc_ref = self.db.collection('portfolio').document(ticker)
             if quantity > 0:
-                doc_ref.set({
+                data = {
                     "Ticker": ticker,
                     "Quantity": quantity,
                     "AvgPrice": avgPrice,
                     "PurchaseDate": purchaseDate
-                }, merge=True)
+                }
+                if strategy:
+                    data["Strategy"] = strategy
+                doc_ref.set(data, merge=True)
             else:
                 doc_ref.delete()
             return "success"
