@@ -239,8 +239,6 @@ const PortfolioTable: React.FC = () => {
                 const currentPrice = asset.CurrentPrice || 0;
                 const avgPrice = asset.AvgPrice || 0;
                 const quantity = asset.Quantity || 0;
-              
-  const totalInvested = avgPrice * quantity;
                 const totalInvested = avgPrice * quantity;
                 const unrealizedProfit = currentPrice > 0 ? (currentPrice - avgPrice) * quantity : 0;
                 const returnRate = avgPrice > 0 && currentPrice > 0 ? ((currentPrice - avgPrice) / avgPrice) * 100 : 0;
