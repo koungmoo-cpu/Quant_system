@@ -376,6 +376,7 @@ class PortfolioItemReq(BaseModel):
     quantity: int
     avgPrice: float
     purchaseDate: str
+    strategy: Optional[str] = None
 
 import yfinance as yf
 from datetime import datetime
@@ -517,7 +518,7 @@ async def close_portfolio(req: PortfolioCloseReq):
 
 @app.post("/api/portfolio/update")
 async def update_portfolio(req: PortfolioItemReq):
-    result = db.update_portfolio_item(req.ticker, req.quantity, req.avgPrice, req.purchaseDate)
+    result = db.update_portfolio_item(req.ticker, req.quantity, req.avgPrice, req.purchaseDate, getattr(req, 'strategy', None))
     if result != "success":
         raise HTTPException(status_code=500, detail=result)
     return {"status": "success"}

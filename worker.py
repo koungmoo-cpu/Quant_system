@@ -125,6 +125,7 @@ def run_scan():
             if score >= 4 and len(setup_fields) < 10:
                 print(f"    -> [AI 분석 중...]")
                 ai_summary = get_gemini_master_signal(res)
+                res["ai_summary"] = ai_summary  # 추가
                 
                 setup_fields.append({
                     "name": f"{res['ticker']} (Score: {score})",
@@ -136,10 +137,55 @@ def run_scan():
     try:
         from db_connector import db
         from datetime import datetime
+        import pytz
         
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # 한국 시간 적용
+        timestamp = datetime.now(pytz.timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S")
         db.save_scan_results(final_results, timestamp)
-        print("결과가 데이터베이스에 성공적으로 저장되었습니다.")
+        
+        # 프론트엔드 UI를 위해 latest_setups 컬렉션 갱신
+        detected_items = []
+        for r in final_results:
+            strategy = r.get('strategy', 'None')
+            if "No Setup" not in strategy and "Data" not in strategy:
+                item = {
+                    "ticker": r.get('ticker'),
+                    "name": r.get('ticker'),
+                    "strategy": strategy,
+                    "signal": "BUY",
+                    "detected_at": timestamp,
+                    "detected_price": round(float(r.get("currentPrice", 0)), 2),
+                    "current_price": round(float(r.get("currentPrice", 0)), 2),
+                    "entry_pivot": round(float(r.get("entry_pivot", 0) or 0), 2),
+                    "stop_loss": round(float(r.get("stop_loss", 0) or 0), 2),
+                    "score": int(r.get("score", 0)),
+                    "ai_summary": r.get("ai_summary", " ".join(r.get("details", [])))
+                }
+                detected_items.append(item)
+                
+        # 기존 데이터와 비교하여 연속 발생(streak) 등 계산
+        prev_data = db.get_latest_detected_setups()
+        prev_items = {item["ticker"]: item for item in prev_data.get("items", [])} if prev_data else {}
+        
+        for item in detected_items:
+            ticker = item["ticker"]
+            if ticker in prev_items:
+                item["is_new"] = False
+                item["streak_days"] = int(prev_items[ticker].get("streak_days", 1)) + 1
+                item["detected_at"] = prev_items[ticker].get("detected_at", item["detected_at"])
+                item["detected_price"] = float(prev_items[ticker].get("detected_price", item["detected_price"]))
+            else:
+                item["is_new"] = True
+                item["streak_days"] = 1
+                
+        schema_data = {
+            "last_scanned_at": timestamp,
+            "total_scanned": len(passed_tickers_list),
+            "detected_count": len(detected_items),
+            "items": detected_items
+        }
+        db.save_detected_setups(schema_data)
+        print(f"결과가 데이터베이스에 성공적으로 저장되었습니다. (기준 시간: {timestamp})")
     except Exception as e:
         print(f"DB 저장 중 에러 발생: {e}")
         

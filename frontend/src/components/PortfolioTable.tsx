@@ -28,7 +28,7 @@ const PortfolioTable: React.FC = () => {
           sell_price: closeForm.sellPrice,
           sell_quantity: closeForm.sellQuantity,
           exit_reason: closeForm.exitReason,
-          strategy: 'Manual'
+          strategy: closingAsset.Strategy || 'Manual'
         })
       });
       if (res.ok) {
@@ -159,6 +159,7 @@ const PortfolioTable: React.FC = () => {
           <thead>
             <tr>
               <th>Ticker</th>
+              <th>Strategy</th>
               <th>Quantity</th>
               <th>Avg Price</th>
               <th>Current Price</th>
@@ -180,6 +181,14 @@ const PortfolioTable: React.FC = () => {
                     value={editForm.Ticker} 
                     onChange={e => setEditForm({ ...editForm, Ticker: e.target.value.toUpperCase() })} 
                     placeholder="e.g. AAPL"
+                  />
+                </td>
+                <td>
+                  <input 
+                    type="text" 
+                    value={editForm.Strategy || ''} 
+                    onChange={e => setEditForm({ ...editForm, Strategy: e.target.value })} 
+                    placeholder="e.g. Breakout"
                   />
                 </td>
                 <td>
@@ -226,6 +235,7 @@ const PortfolioTable: React.FC = () => {
                 const quantity = asset.Quantity || 0;
               
   const totalInvested = avgPrice * quantity;
+                const totalInvested = avgPrice * quantity;
                 const unrealizedProfit = currentPrice > 0 ? (currentPrice - avgPrice) * quantity : 0;
                 const returnRate = avgPrice > 0 && currentPrice > 0 ? ((currentPrice - avgPrice) / avgPrice) * 100 : 0;
 
@@ -234,6 +244,13 @@ const PortfolioTable: React.FC = () => {
                   {editingTicker === asset.Ticker && editForm ? (
                     <>
                       <td>{asset.Ticker}</td>
+                      <td>
+                        <input 
+                          type="text" 
+                          value={editForm.Strategy || ''} 
+                          onChange={e => setEditForm({ ...editForm, Strategy: e.target.value })} 
+                        />
+                      </td>
                       <td>
                         <input 
                           type="number" 
@@ -268,6 +285,11 @@ const PortfolioTable: React.FC = () => {
                   ) : (
                     <>
                       <td className="ticker-col">{asset.Ticker}</td>
+                      <td>
+                        <span className="strategy-badge" style={{ fontSize: '0.75rem', padding: '2px 6px' }}>
+                          {asset.Strategy || 'Manual'}
+                        </span>
+                      </td>
                       <td>{asset.Quantity}</td>
                       <td>${avgPrice.toFixed(2)}</td>
                       <td>${currentPrice.toFixed(2)}</td>

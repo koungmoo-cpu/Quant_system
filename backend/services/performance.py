@@ -25,16 +25,20 @@ class PerformanceEngine:
 
         # Map new English schema fields to expected Korean fields if they exist
         for item in data:
-            if "strategy" in item and "적용전략" not in item: item["적용전략"] = item["strategy"]
-            if "entry_price" in item and "매수가" not in item: item["매수가"] = item["entry_price"]
-            if "exit_price" in item and "매도가" not in item: item["매도가"] = item["exit_price"]
+            if item.get("strategy") and not item.get("적용전략"): item["적용전략"] = item["strategy"]
+            if item.get("entry_price") and not item.get("매수가"): item["매수가"] = item["entry_price"]
+            if item.get("buy_price") and not item.get("매수가"): item["매수가"] = item["buy_price"]
+            if item.get("exit_price") and not item.get("매도가"): item["매도가"] = item["exit_price"]
+            if item.get("sell_price") and not item.get("매도가"): item["매도가"] = item["sell_price"]
             if "profit_loss" in item and "실현손익" not in item: item["실현손익"] = item["profit_loss"]
             if "profit_rate" in item and "수익률(%)" not in item: item["수익률(%)"] = item["profit_rate"]
-            if "quantity" in item and "수량" not in item: item["수량"] = item["quantity"]
-            if "entry_date" in item and "매수일" not in item: item["매수일"] = item["entry_date"]
-            if "exit_date" in item and "매도일" not in item: item["매도일"] = item["exit_date"]
-            if "exit_reason" in item and "청산사유" not in item: item["청산사유"] = item["exit_reason"]
-            if "strategy_type" in item and "적용전략" not in item: item["적용전략"] = item["strategy_type"]
+            if item.get("quantity") and not item.get("수량"): item["수량"] = item["quantity"]
+            if item.get("entry_date") and not item.get("매수일"): item["매수일"] = item["entry_date"]
+            if item.get("buy_date") and not item.get("매수일"): item["매수일"] = item["buy_date"]
+            if item.get("exit_date") and not item.get("매도일"): item["매도일"] = item["exit_date"]
+            if item.get("sell_date") and not item.get("매도일"): item["매도일"] = item["sell_date"]
+            if item.get("exit_reason") and not item.get("청산사유"): item["청산사유"] = item["exit_reason"]
+            if item.get("strategy_type") and not item.get("적용전략"): item["적용전략"] = item["strategy_type"]
             if "market_status" not in item: item["market_status"] = "Unknown"
 
 

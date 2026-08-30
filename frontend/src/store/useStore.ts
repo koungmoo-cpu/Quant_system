@@ -40,6 +40,7 @@ export interface OwnedAsset {
   CurrentPrice?: number;
   trailingStop?: number;
   ma20?: number;
+  Strategy?: string;
 }
 
 export interface PerformanceMetrics {
