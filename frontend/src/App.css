@@ -275,16 +275,28 @@ body {
 
 /* 5. Main View Segmented Control (Desktop) */
 .main-nav-segmented {
-  display: none;
-  justify-content: center;
-  gap: 16px;
+  display: flex;
   margin-bottom: 24px;
+  background-color: #f1f5f9;
+  border-radius: 8px;
+  padding: 4px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 @media (min-width: 640px) {
   .main-nav-segmented {
-    display: flex;
-  }
+  display: flex;
+  margin-bottom: 24px;
+  background-color: #f1f5f9;
+  border-radius: 8px;
+  padding: 4px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .main-nav-segmented button {

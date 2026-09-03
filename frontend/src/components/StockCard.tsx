@@ -9,30 +9,44 @@ interface Props {
 const StockCard: React.FC<Props> = ({ stock }) => {
   const [expanded, setExpanded] = useState(false);
   const [livePrice, setLivePrice] = useState<number | null>(null);
-  const [aiInsightData, setAiInsightData] = useState<string[] | null>(null);
-  const [isLoadingInsight, setIsLoadingInsight] = useState(false);
+  const handleBuy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const qty = window.prompt(`[${stock.ticker}] 포트폴리오에 추가할 수량을 입력하세요 (기본 1주):`, "1");
+    if (qty === null) return;
+    
+    const quantity = parseInt(qty, 10);
+    if (isNaN(quantity) || quantity <= 0) {
+      alert("유효한 수량을 입력하세요.");
+      return;
+    }
+    
+    const priceStr = window.prompt(`[${stock.ticker}] 매수 단가를 입력하세요 (기본 현재가: $${stock.currentPrice}):`, String(stock.currentPrice));
+    if (priceStr === null) return;
+    
+    const price = parseFloat(priceStr);
+    if (isNaN(price) || price <= 0) {
+      alert("유효한 가격을 입력하세요.");
+      return;
+    }
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    try {
+      await updateOwnedAsset({
+        Ticker: stock.ticker,
+        Quantity: quantity,
+        AvgPrice: price,
+        PurchaseDate: today
+      });
+      alert(`포트폴리오에 ${stock.ticker} (${quantity}주) 추가 완료!`);
+    } catch (e) {
+      console.error(e);
+      alert("포트폴리오 추가 실패");
+    }
+  };
 
   const handleExpand = () => {
     setExpanded(!expanded);
-  };
-  
-  const handleRequestInsight = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsLoadingInsight(true);
-    try {
-      const API_BASE = 'https://ai-stock-backend-108832568469.asia-northeast3.run.app';
-      const res = await fetch(`${API_BASE}/api/ai-catalyst-insight/${stock.ticker}`);
-      if (res.ok) {
-        const data = await res.json();
-        setAiInsightData(data.summary || []);
-      }
-    } catch(e) {
-      console.error(e);
-      setAiInsightData(["AI 분석 중 오류가 발생했습니다."]);
-    } finally {
-      setIsLoadingInsight(false);
-      setExpanded(true);
-    }
   };
   
   const displayStock = stock;
@@ -56,7 +70,7 @@ const StockCard: React.FC<Props> = ({ stock }) => {
   }, [displayStock.ticker, displayStock.currentPrice, livePrice]);
 
 
-  const { watchlist, toggleWatchlist, removeTicker } = useStore();
+  const { watchlist, toggleWatchlist, removeTicker, updateOwnedAsset } = useStore();
   const isStarred = watchlist.includes(displayStock.ticker);
 
   const getActionColor = (action: string) => {
@@ -112,6 +126,24 @@ const StockCard: React.FC<Props> = ({ stock }) => {
               </span>
               {' '}{displayStock.ticker}
               
+              <button 
+                onClick={handleBuy} 
+                style={{
+                  marginLeft: '8px',
+                  padding: '4px 10px',
+                  fontSize: '0.8rem',
+                  backgroundColor: '#10b981',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold'
+                }}
+                title="포트폴리오에 바로 담기"
+              >
+                💼 Buy
+              </button>
+
               {displayStock.is_new === true ? (
                 <span style={{ marginLeft: '8px', padding: '0.125rem 0.5rem', fontSize: '0.75rem', fontWeight: 700, borderRadius: '9999px', backgroundColor: 'rgba(244, 63, 94, 0.2)', color: '#f43f5e', border: '1px solid rgba(244, 63, 94, 0.3)', animation: 'pulse 2s infinite' }}>
                   🔥 NEW
@@ -196,26 +228,10 @@ const StockCard: React.FC<Props> = ({ stock }) => {
           <span className="remove-btn" onClick={handleRemove} title="대시보드에서 삭제">🗑️</span>
         </div>
       </div>
-      
       {expanded && (
         <div className="stock-card-details">
-          <div className="ai-briefing">
-            <h4>🤖 Gemini AI Briefing</h4>
-            {isLoadingBriefing ? (
-              <div style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>
-                <div className="loading-spinner" style={{ margin: '0 auto 10px auto', width: '24px', height: '24px', border: '3px solid #cbd5e1', borderTop: '3px solid #3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-                AI 심층 분석을 가져오는 중입니다...
-              </div>
-            ) : (
-              <ul>
-                {displayStock.summary.map((line, idx) => (
-                  <li key={idx}>{line}</li>
-                ))}
-              </ul>
-            )}
-          </div>
 
-          {!isLoadingBriefing && displayStock.action === 'BUY' && displayStock.entryPivot && (
+          {displayStock.action === 'BUY' && displayStock.entryPivot && (
             <div className="order-ticket" style={{ marginTop: '16px', marginBottom: '16px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', borderLeft: '4px solid #3b82f6', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
               <h4 style={{ margin: '0 0 12px 0', color: '#1e293b', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 🤖 자동감시주문 셋팅 가이드
@@ -239,7 +255,7 @@ const StockCard: React.FC<Props> = ({ stock }) => {
             </div>
           )}
 
-          {!isLoadingBriefing && (
+          {true && (
             <div className="price-targets">
               <div className="target">
                 <span className="label">Target Price</span>

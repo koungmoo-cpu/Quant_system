@@ -6,13 +6,11 @@ from pydantic import BaseModel
 from config import settings
 from services.market_data import MarketDataFetcher
 from services.strategy_router import StrategyRouter
-from services.ai_analyzer import AIAnalyzer
 from services.performance import PerformanceEngine
 
 app = FastAPI(title=settings.app_name)
 market_fetcher = MarketDataFetcher(batch_size=20, delay_seconds=0.5)
 strategy_router = StrategyRouter()
-ai_analyzer = AIAnalyzer()
 performance_engine = PerformanceEngine()
 
 # CORS setup for frontend communication
@@ -416,7 +414,6 @@ class PortfolioItemReq(BaseModel):
 
 import yfinance as yf
 from datetime import datetime
-from services.notifier import send_discord_alert
 
 def get_earnings_date(ticker_str: str):
     try:
@@ -641,22 +638,10 @@ async def cron_daily_scan():
                     "value": f"전략: {item['strategy']}\n진입가: ${item['entryPivot']}\n손절가: ${item['stopLoss']}",
                     "inline": False
                 })
-            send_discord_alert(
-                title="📊 일간 메인 스캔 결과",
-                description=description,
-                color=0x2ecc71, # Green
-                fields=fields
-            )
-        else:
-            send_discord_alert(
-                title="📊 일간 메인 스캔 결과",
-                description="오늘의 최상위 BUY 셋업 종목이 없습니다.",
-                color=0x95a5a6 # Gray
-            )
             
         return {"status": "success", "found": len(buy_list)}
     except Exception as e:
-        send_discord_alert("❌ 일간 메인 스캔 실패", str(e), 0xe74c3c)
+
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -666,8 +651,7 @@ async def cron_intraday_scan():
         from datetime import datetime
         import pytz
         import yfinance as yf
-        from services.notifier import send_discord_alert
-        
+                
         # 1. Fetch portfolio
         res_portfolio = await get_portfolio()
         portfolio = res_portfolio.get("portfolio", [])
@@ -763,12 +747,6 @@ async def cron_intraday_scan():
             # Batch them into 25 fields per embed limit
             chunked_fields = [fields[i:i+25] for i in range(0, len(fields), 25)]
             for chunk in chunked_fields:
-                send_discord_alert(
-                    title="⚡ 장중 실시간 가격 모니터링", 
-                    description="설정된 조건에 도달한 종목이 있습니다.", 
-                    color=0xf1c40f, 
-                    fields=chunk
-                )
                 alerts_sent += len(chunk)
                 
         # 7. Update Firestore latest_setups and scan_results/latest with new prices
@@ -818,12 +796,7 @@ async def cron_risk_check():
                     "value": f"현재가: ${item['CurrentPrice']} < 손절가(10MA): ${item['trailingStop']}",
                     "inline": False
                 })
-            send_discord_alert(
-                title="⚠️ 장중 포트폴리오 리스크 경고",
-                description="일부 보유 종목이 트레일링 스탑(10MA)을 이탈했습니다! 즉각적인 대응이 필요합니다.",
-                color=0xe74c3c, # Red
-                fields=fields
-            )
+
             
         return {"status": "success", "triggered": len(triggered)}
     except Exception as e:

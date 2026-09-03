@@ -11,7 +11,7 @@ try:
     from config import settings
 except ImportError:
     class MockSettings:
-        google_genai_api_key = os.environ.get("GOOGLE_GENAI_API_KEY", "")
+        pass
     settings = MockSettings()
 
 def is_momentum_growth_stock(df: pd.DataFrame) -> tuple[bool, str]:
@@ -171,28 +171,6 @@ def master_strategy_analyzer(ticker: str):
         
     # 5가지 모두 실패
     return {'ticker': ticker, 'score': score, 'strategy': 'No Setup (관망)', 'stop_loss': None, 'entry_pivot': None, 'details': details}
-
-def get_gemini_master_signal(analyzed_data: dict) -> str:
-    from google import genai
-    from google.genai import types
-    
-    api_key = settings.google_genai_api_key
-    if not api_key:
-        return "Error: GOOGLE_GENAI_API_KEY is not set. Cannot perform AI analysis."
-        
-    client = genai.Client(api_key=api_key)
-    
-    prompt = f"당신은 퀀트 트레이딩 AI입니다. 파이썬이 분류한 셋업 데이터({json.dumps(analyzed_data, ensure_ascii=False)})를 바탕으로, 해당 전략의 원칙에 맞추어 '매수하십시오(BUY)' 또는 '관망하십시오(WAIT)'라는 명확한 지시와 함께 목표가/손절가를 3줄 이내로 브리핑해 주세요."
-    
-    try:
-        response = client.models.generate_content(
-            model="gemini-3.6-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(temperature=0.2)
-        )
-        return response.text
-    except Exception as e:
-        return f"AI API Error: {str(e)}"
 
 import concurrent.futures
 
