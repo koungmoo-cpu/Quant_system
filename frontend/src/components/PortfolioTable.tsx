@@ -97,6 +97,12 @@ const PortfolioTable: React.FC = () => {
   const totalUnrealizedProfit = totalCurrentValue - totalInvested;
   const totalReturnRate = totalInvested > 0 ? (totalUnrealizedProfit / totalInvested) * 100 : 0;
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 15;
+  const totalPages = Math.ceil(ownedAssets.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedAssets = ownedAssets.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
   return (
     <div className="portfolio-container">
       {closingAsset && (
@@ -235,7 +241,7 @@ const PortfolioTable: React.FC = () => {
                 <td colSpan={10} className="no-data">No assets in portfolio yet.</td>
               </tr>
             ) : (
-              ownedAssets.map((asset, idx) => {
+              paginatedAssets.map((asset, idx) => {
                 const currentPrice = asset.CurrentPrice || 0;
                 const avgPrice = asset.AvgPrice || 0;
                 const quantity = asset.Quantity || 0;
@@ -342,6 +348,26 @@ const PortfolioTable: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="pagination" style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '20px' }}>
+          <button 
+            disabled={currentPage === 1} 
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            style={{ padding: '6px 12px', border: '1px solid #ccc', borderRadius: '4px', background: currentPage === 1 ? '#f3f4f6' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+          >
+            이전
+          </button>
+          <span style={{ padding: '6px 12px' }}>{currentPage} / {totalPages}</span>
+          <button 
+            disabled={currentPage === totalPages} 
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            style={{ padding: '6px 12px', border: '1px solid #ccc', borderRadius: '4px', background: currentPage === totalPages ? '#f3f4f6' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+          >
+            다음
+          </button>
+        </div>
+      )}
     </div>
   );
 };

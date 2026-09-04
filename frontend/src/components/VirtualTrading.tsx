@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useStore, OwnedAsset } from '../store/useStore';
-import './PortfolioTable.css'; // Reuse portfolio table styles
-import './PerformanceStats.css'; // Reuse performance stats styles
+import './PortfolioTable.css'; 
+import './PerformanceStats.css'; 
 
 const VirtualTrading: React.FC = () => {
   const { 
@@ -10,7 +10,9 @@ const VirtualTrading: React.FC = () => {
     updateVirtualAsset, 
     closeVirtualAsset,
     virtualPerformanceData,
-    fetchVirtualPerformance
+    fetchVirtualPerformance,
+    virtualHistory,
+    fetchVirtualHistory
   } = useStore();
 
   const [closingAsset, setClosingAsset] = useState<OwnedAsset | null>(null);
@@ -20,10 +22,15 @@ const VirtualTrading: React.FC = () => {
   const [editForm, setEditForm] = useState<OwnedAsset | null>(null);
   const [initialCapital, setInitialCapital] = useState<number>(10000000);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [historyPage, setHistoryPage] = useState(1);
+  const ITEMS_PER_PAGE = 15;
+
   useEffect(() => {
     fetchVirtualPortfolio();
     fetchVirtualPerformance(initialCapital);
-  }, [fetchVirtualPortfolio, fetchVirtualPerformance, initialCapital]);
+    fetchVirtualHistory();
+  }, [fetchVirtualPortfolio, fetchVirtualPerformance, fetchVirtualHistory, initialCapital]);
 
   const handleCloseInit = (asset: OwnedAsset) => {
     setClosingAsset(asset);
@@ -39,6 +46,7 @@ const VirtualTrading: React.FC = () => {
     await closeVirtualAsset(closingAsset.Ticker, closeForm.sellPrice, closeForm.sellQuantity, closeForm.exitReason, closingAsset.Strategy || 'Virtual');
     setClosingAsset(null);
     fetchVirtualPerformance(initialCapital);
+    fetchVirtualHistory();
   };
 
   const handleSave = async () => {
@@ -59,12 +67,20 @@ const VirtualTrading: React.FC = () => {
 
   const handleAdd = () => {
     setIsAdding(true);
-    setEditForm({ Ticker: '', Quantity: 0, AvgPrice: 0, PurchaseDate: new Date().toISOString().split('T')[0], Strategy: 'Virtual' });
+    setEditForm({ Ticker: '', Quantity: 0, AvgPrice: 0, PurchaseDate: new Date().toISOString().split('T')[0], Strategy: 'Virtual', setup: '', factor_score: 0 });
   };
 
   const totalInvested = virtualPortfolio.reduce((sum, asset) => sum + ((asset.AvgPrice || 0) * (asset.Quantity || 0)), 0);
   const totalCurrentValue = virtualPortfolio.reduce((sum, asset) => sum + ((asset.CurrentPrice || 0) * (asset.Quantity || 0)), 0);
   const totalUnrealizedProfit = totalCurrentValue - totalInvested;
+
+  const totalPages = Math.ceil(virtualPortfolio.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedPortfolio = virtualPortfolio.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  const historyTotalPages = Math.ceil((virtualHistory || []).length / ITEMS_PER_PAGE);
+  const historyStartIndex = (historyPage - 1) * ITEMS_PER_PAGE;
+  const paginatedHistory = (virtualHistory || []).slice(historyStartIndex, historyStartIndex + ITEMS_PER_PAGE);
 
   return (
     <div className="portfolio-container" style={{ marginTop: '20px' }}>
@@ -119,15 +135,17 @@ const VirtualTrading: React.FC = () => {
         <span className="summary-item">평가 손익: <span className={totalUnrealizedProfit >= 0 ? 'profit-text' : 'loss-text'}>${totalUnrealizedProfit.toLocaleString()}</span></span>
       </div>
 
-      <div style={{ overflowX: 'auto', width: '100%' }}>
+      <div style={{ overflowX: 'auto', width: '100%', marginBottom: '20px' }}>
         <table className="portfolio-table">
           <thead>
             <tr>
               <th>Ticker</th>
-              <th>Strategy</th>
+              <th>Setup/Strategy</th>
               <th>Quantity</th>
               <th>Avg Price</th>
               <th>Current Price</th>
+              <th>Buy Score</th>
+              <th>SPY/QQQ (Entry)</th>
               <th>Purchase Date</th>
               <th>Actions</th>
             </tr>
@@ -135,10 +153,12 @@ const VirtualTrading: React.FC = () => {
           <tbody>
             {isAdding && editForm && (
               <tr>
-                <td><input type="text" value={editForm.Ticker} onChange={e => setEditForm({ ...editForm, Ticker: e.target.value.toUpperCase() })} placeholder="AAPL" /></td>
-                <td><input type="text" value={editForm.Strategy} onChange={e => setEditForm({ ...editForm, Strategy: e.target.value })} /></td>
-                <td><input type="number" value={editForm.Quantity} onChange={e => setEditForm({ ...editForm, Quantity: parseInt(e.target.value) || 0 })} /></td>
-                <td><input type="number" value={editForm.AvgPrice} onChange={e => setEditForm({ ...editForm, AvgPrice: parseFloat(e.target.value) || 0 })} /></td>
+                <td><input type="text" value={editForm.Ticker} onChange={e => setEditForm({ ...editForm, Ticker: e.target.value.toUpperCase() })} placeholder="AAPL" style={{width: '70px'}}/></td>
+                <td><input type="text" value={editForm.setup || ''} onChange={e => setEditForm({ ...editForm, setup: e.target.value })} placeholder="VCP 등" style={{width: '90px'}}/></td>
+                <td><input type="number" value={editForm.Quantity} onChange={e => setEditForm({ ...editForm, Quantity: parseInt(e.target.value) || 0 })} style={{width: '60px'}}/></td>
+                <td><input type="number" value={editForm.AvgPrice} onChange={e => setEditForm({ ...editForm, AvgPrice: parseFloat(e.target.value) || 0 })} style={{width: '70px'}}/></td>
+                <td>-</td>
+                <td><input type="number" value={editForm.factor_score || 0} onChange={e => setEditForm({ ...editForm, factor_score: parseFloat(e.target.value) || 0 })} style={{width: '60px'}}/></td>
                 <td>-</td>
                 <td><input type="date" value={editForm.PurchaseDate} onChange={e => setEditForm({ ...editForm, PurchaseDate: e.target.value })} /></td>
                 <td>
@@ -149,14 +169,18 @@ const VirtualTrading: React.FC = () => {
             )}
             
             {virtualPortfolio.length === 0 && !isAdding ? (
-              <tr><td colSpan={7} className="no-data">가상 포트폴리오에 등록된 종목이 없습니다.</td></tr>
-            ) : virtualPortfolio.map(asset => (
+              <tr><td colSpan={9} className="no-data">가상 포트폴리오에 등록된 종목이 없습니다.</td></tr>
+            ) : paginatedPortfolio.map(asset => (
               <tr key={asset.Ticker}>
                 <td className="ticker-col">{asset.Ticker}</td>
-                <td><span className="strategy-badge">{asset.Strategy}</span></td>
+                <td><span className="strategy-badge">{asset.setup || asset.Strategy}</span></td>
                 <td>{asset.Quantity}</td>
                 <td>${(asset.AvgPrice || 0).toFixed(2)}</td>
                 <td>${(asset.CurrentPrice || 0).toFixed(2)}</td>
+                <td>{asset.factor_score || '-'}</td>
+                <td style={{ fontSize: '0.8rem', color: '#666' }}>
+                  {asset.spy_entry ? `S: ${asset.spy_entry.toFixed(1)}` : '-'} / {asset.qqq_entry ? `Q: ${asset.qqq_entry.toFixed(1)}` : '-'}
+                </td>
                 <td>{asset.PurchaseDate}</td>
                 <td style={{ display: 'flex', gap: '4px' }}>
                   <button className="close-btn" onClick={() => handleCloseInit(asset)} style={{ padding: '4px 8px', backgroundColor: '#8b5cf6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>가상 매도(청산)</button>
@@ -167,6 +191,97 @@ const VirtualTrading: React.FC = () => {
           </tbody>
         </table>
       </div>
+      
+      {totalPages > 1 && (
+        <div className="pagination" style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '40px' }}>
+          <button 
+            disabled={currentPage === 1} 
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            style={{ padding: '6px 12px', border: '1px solid #ccc', borderRadius: '4px', background: currentPage === 1 ? '#f3f4f6' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+          >
+            이전
+          </button>
+          <span style={{ padding: '6px 12px' }}>{currentPage} / {totalPages}</span>
+          <button 
+            disabled={currentPage === totalPages} 
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            style={{ padding: '6px 12px', border: '1px solid #ccc', borderRadius: '4px', background: currentPage === totalPages ? '#f3f4f6' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+          >
+            다음
+          </button>
+        </div>
+      )}
+
+      {/* 3. 거래 내역 (History) */}
+      <div className="portfolio-header" style={{ marginTop: '20px' }}>
+        <h2>Virtual Trade History (종료된 매매 내역)</h2>
+      </div>
+
+      <div style={{ overflowX: 'auto', width: '100%' }}>
+        <table className="portfolio-table">
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th>Setup</th>
+              <th>Score</th>
+              <th>Entry / Exit Price</th>
+              <th>Profit Rate (%)</th>
+              <th>SPY (Entry ➔ Exit)</th>
+              <th>QQQ (Entry ➔ Exit)</th>
+              <th>Dates</th>
+              <th>Exit Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(virtualHistory || []).length === 0 ? (
+              <tr><td colSpan={9} className="no-data">종료된 가상 거래 내역이 없습니다.</td></tr>
+            ) : paginatedHistory.map((trade: any, idx: number) => {
+              const spyChange = trade.spy_entry && trade.spy_exit ? ((trade.spy_exit - trade.spy_entry) / trade.spy_entry * 100).toFixed(2) : '-';
+              const qqqChange = trade.qqq_entry && trade.qqq_exit ? ((trade.qqq_exit - trade.qqq_entry) / trade.qqq_entry * 100).toFixed(2) : '-';
+              return (
+              <tr key={`history-${trade.ticker}-${idx}`}>
+                <td className="ticker-col">{trade.ticker}</td>
+                <td><span className="strategy-badge">{trade.setup || trade.strategy || '-'}</span></td>
+                <td>{trade.factor_score || '-'}</td>
+                <td>${(trade.entry_price || 0).toFixed(2)} ➔ ${(trade.exit_price || 0).toFixed(2)}</td>
+                <td className={(trade.profit_rate || 0) > 0 ? 'profit-text' : (trade.profit_rate || 0) < 0 ? 'loss-text' : ''}>
+                  {(trade.profit_rate || 0) > 0 ? '+' : ''}{(trade.profit_rate || 0).toFixed(2)}%
+                </td>
+                <td style={{ fontSize: '0.85rem' }}>
+                  {trade.spy_entry ? `${trade.spy_entry.toFixed(1)} ➔ ${trade.spy_exit?.toFixed(1) || '-'}` : '-'}
+                  {spyChange !== '-' && <span style={{ marginLeft: '4px', color: parseFloat(spyChange) > 0 ? '#10b981' : '#ef4444' }}>({spyChange}%)</span>}
+                </td>
+                <td style={{ fontSize: '0.85rem' }}>
+                  {trade.qqq_entry ? `${trade.qqq_entry.toFixed(1)} ➔ ${trade.qqq_exit?.toFixed(1) || '-'}` : '-'}
+                  {qqqChange !== '-' && <span style={{ marginLeft: '4px', color: parseFloat(qqqChange) > 0 ? '#10b981' : '#ef4444' }}>({qqqChange}%)</span>}
+                </td>
+                <td style={{ fontSize: '0.85rem' }}>{trade.entry_date} ~ {trade.exit_date}</td>
+                <td style={{ fontSize: '0.85rem' }}>{trade.exit_reason}</td>
+              </tr>
+            )})}
+          </tbody>
+        </table>
+      </div>
+
+      {historyTotalPages > 1 && (
+        <div className="pagination" style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '20px' }}>
+          <button 
+            disabled={historyPage === 1} 
+            onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
+            style={{ padding: '6px 12px', border: '1px solid #ccc', borderRadius: '4px', background: historyPage === 1 ? '#f3f4f6' : 'white', cursor: historyPage === 1 ? 'not-allowed' : 'pointer' }}
+          >
+            이전
+          </button>
+          <span style={{ padding: '6px 12px' }}>{historyPage} / {historyTotalPages}</span>
+          <button 
+            disabled={historyPage === historyTotalPages} 
+            onClick={() => setHistoryPage(p => Math.min(historyTotalPages, p + 1))}
+            style={{ padding: '6px 12px', border: '1px solid #ccc', borderRadius: '4px', background: historyPage === historyTotalPages ? '#f3f4f6' : 'white', cursor: historyPage === historyTotalPages ? 'not-allowed' : 'pointer' }}
+          >
+            다음
+          </button>
+        </div>
+      )}
 
       {closingAsset && (
         <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>

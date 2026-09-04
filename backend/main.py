@@ -1025,10 +1025,18 @@ class VirtualPortfolioUpdateReq(BaseModel):
     purchaseDate: str
     strategy: Optional[str] = None
     factor_score: Optional[float] = 0.0
+    setup: Optional[str] = ""
 
 @app.post("/api/virtual/portfolio/update")
 async def update_virtual_portfolio(req: VirtualPortfolioUpdateReq):
-    result = db.update_virtual_portfolio_item(req.ticker, req.quantity, req.avgPrice, req.purchaseDate, req.strategy, req.factor_score)
+    prices = market_fetcher.get_historical_prices(req.purchaseDate)
+    spy_entry = prices.get("SPY", 0.0)
+    qqq_entry = prices.get("QQQ", 0.0)
+
+    result = db.update_virtual_portfolio_item(
+        req.ticker, req.quantity, req.avgPrice, req.purchaseDate, 
+        req.strategy, req.factor_score, req.setup, spy_entry, qqq_entry
+    )
     if result == "success":
         return {"status": "success"}
     raise HTTPException(status_code=500, detail=result)
@@ -1060,10 +1068,14 @@ async def close_virtual_position(req: VirtualCloseReq):
     profit_rate = ((req.sell_price - avg_price) / avg_price * 100) if avg_price > 0 else 0
     
     now_str = datetime.now(pytz.timezone("Asia/Seoul")).strftime("%Y-%m-%d")
+    prices = market_fetcher.get_historical_prices(now_str)
+    spy_exit = prices.get("SPY", 0.0)
+    qqq_exit = prices.get("QQQ", 0.0)
     
     trade_data = {
         "ticker": req.ticker,
         "strategy": req.strategy,
+        "setup": asset.get("setup", ""),
         "entry_price": avg_price,
         "exit_price": req.sell_price,
         "profit_loss": profit_loss,
@@ -1072,7 +1084,11 @@ async def close_virtual_position(req: VirtualCloseReq):
         "entry_date": asset.get("PurchaseDate", ""),
         "exit_date": now_str,
         "exit_reason": req.exit_reason,
-        "factor_score": asset.get("factor_score", 0)
+        "factor_score": asset.get("factor_score", 0),
+        "spy_entry": asset.get("spy_entry", 0),
+        "qqq_entry": asset.get("qqq_entry", 0),
+        "spy_exit": spy_exit,
+        "qqq_exit": qqq_exit
     }
     
     db.add_virtual_trade(trade_data)
@@ -1084,7 +1100,10 @@ async def close_virtual_position(req: VirtualCloseReq):
         avg_price, 
         asset.get("PurchaseDate", ""),
         asset.get("Strategy"),
-        asset.get("factor_score", 0)
+        asset.get("factor_score", 0),
+        asset.get("setup", ""),
+        asset.get("spy_entry", 0),
+        asset.get("qqq_entry", 0)
     )
     
     return {"status": "success", "message": f"Sold {req.sell_quantity} of {req.ticker} virtually"}
@@ -1094,4 +1113,8 @@ async def get_virtual_performance(initial_capital: float = 10000000):
     trades = db.get_virtual_trade_history()
     stats = performance_engine.calculate_account_metrics(trades, initial_capital)
     return stats
+
+@app.get("/api/virtual/history")
+async def get_virtual_history():
+    return db.get_virtual_trade_history()
 

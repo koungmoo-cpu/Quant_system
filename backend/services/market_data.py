@@ -92,3 +92,39 @@ class MarketDataFetcher:
         except Exception as e:
             print(f"Market trend evaluation failed: {e}")
             return "Yellow", 50
+
+    def get_historical_prices(self, date_str: str, tickers: List[str] = ["SPY", "QQQ"]) -> Dict[str, float]:
+        """
+        특정 날짜(또는 그 이전 가장 가까운 거래일)의 종가를 가져옵니다.
+        """
+        try:
+            # 날짜를 파싱하고 휴일/주말을 고려하여 해당일 포함 이전 7일치의 데이터를 가져옴
+            target_date = pd.to_datetime(date_str)
+            start_date = (target_date - pd.Timedelta(days=7)).strftime('%Y-%m-%d')
+            # end_date는 target_date + 1일 (yf는 end date를 포함하지 않음)
+            end_date = (target_date + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
+            
+            data = yf.download(tickers, start=start_date, end=end_date, progress=False)
+            if data.empty:
+                return {t: 0.0 for t in tickers}
+            
+            result = {}
+            for ticker in tickers:
+                if len(tickers) == 1:
+                    close_series = data['Close'].dropna()
+                else:
+                    if 'Close' in data.columns and ticker in data['Close'].columns:
+                        close_series = data['Close'][ticker].dropna()
+                    else:
+                        close_series = pd.Series(dtype=float)
+                
+                if not close_series.empty:
+                    # 가장 마지막 날짜(target_date에 가장 가까운 이전 거래일)의 종가 반환
+                    val = close_series.iloc[-1]
+                    result[ticker] = float(val.item() if hasattr(val, 'item') else val)
+                else:
+                    result[ticker] = 0.0
+            return result
+        except Exception as e:
+            print(f"Failed to fetch historical prices for {date_str}: {e}")
+            return {t: 0.0 for t in tickers}

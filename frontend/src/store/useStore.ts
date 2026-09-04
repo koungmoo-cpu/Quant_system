@@ -41,6 +41,10 @@ export interface OwnedAsset {
   trailingStop?: number;
   ma20?: number;
   Strategy?: string;
+  setup?: string;
+  factor_score?: number;
+  spy_entry?: number;
+  qqq_entry?: number;
 }
 
 export interface PerformanceMetrics {
@@ -122,11 +126,13 @@ interface TradingState {
   closeVirtualAsset: (ticker: string, sellPrice: number, sellQuantity: number, exitReason: string, strategy: string) => Promise<void>;
   virtualPerformanceData: PerformanceData | null;
   fetchVirtualPerformance: (initialCapital: number) => Promise<void>;
+  virtualHistory: any[];
+  fetchVirtualHistory: () => Promise<void>;
 }
 
 let API_BASE = 'https://ai-stock-backend-108832568469.asia-northeast3.run.app';
-if (API_BASE.includes('api.example.com')) {
-  API_BASE = 'https://ai-stock-backend-108832568469.asia-northeast3.run.app';
+if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+  API_BASE = 'http://localhost:8000';
 }
 
 export const useStore = create<TradingState>((set, get) => ({
@@ -512,7 +518,11 @@ export const useStore = create<TradingState>((set, get) => ({
           Strategy: String(a.Strategy || 'Manual'),
           CurrentPrice: Number(a.CurrentPrice || 0),
           trailingStop: Number(a.trailingStop || 0),
-          ma20: Number(a.ma20 || 0)
+          ma20: Number(a.ma20 || 0),
+          setup: String(a.setup || a.Strategy || ''),
+          factor_score: Number(a.factor_score || 0),
+          spy_entry: Number(a.spy_entry || 0),
+          qqq_entry: Number(a.qqq_entry || 0)
         }));
         const validAssets = mappedAssets.filter((a: OwnedAsset) => a.Ticker && a.Ticker.trim() !== '');
         set({ virtualPortfolio: validAssets });
@@ -532,7 +542,9 @@ export const useStore = create<TradingState>((set, get) => ({
           quantity: asset.Quantity,
           avgPrice: asset.AvgPrice,
           purchaseDate: asset.PurchaseDate,
-          strategy: asset.Strategy
+          strategy: asset.Strategy,
+          setup: asset.setup,
+          factor_score: asset.factor_score
         })
       });
       if (res.ok) {
@@ -581,6 +593,21 @@ export const useStore = create<TradingState>((set, get) => ({
       }
     } catch (e) {
       console.error("Failed to fetch virtual performance data:", e);
+    }
+  },
+  
+  virtualHistory: [],
+  fetchVirtualHistory: async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/virtual/history`);
+      if (res.ok) {
+        const data = await res.json();
+        // 최신 청산일 기준 내림차순 정렬
+        const sortedData = (data || []).sort((a: any, b: any) => new Date(b.exit_date).getTime() - new Date(a.exit_date).getTime());
+        set({ virtualHistory: sortedData });
+      }
+    } catch (e) {
+      console.error("Failed to fetch virtual history:", e);
     }
   }
 }))

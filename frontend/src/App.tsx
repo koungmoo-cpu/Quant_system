@@ -35,9 +35,10 @@ function App() {
   const [mainView, setMainView] = useState<'SCANNER' | 'MY_SPACE'>('SCANNER');
   const [mySpaceTab, setMySpaceTab] = useState<'WATCHLIST' | 'PORTFOLIO' | 'STATISTICS' | 'VIRTUAL'>('WATCHLIST');
 
-  // Pagination for Watchlist tab
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 11;
+  // Pagination
+  const [watchlistPage, setWatchlistPage] = useState(1);
+  const [scannerPage, setScannerPage] = useState(1);
+  const ITEMS_PER_PAGE = 15;
   const [selectedWatchlistItems, setSelectedWatchlistItems] = useState<Set<string>>(new Set());
 
   const handleAnalyze = (e: React.FormEvent) => {
@@ -108,9 +109,13 @@ function App() {
     return filtered;
   }, [portfolio, watchlist]);
 
-  const totalPages = Math.ceil(watchlistPortfolio.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedWatchlist = watchlistPortfolio.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const watchlistTotalPages = Math.ceil(watchlistPortfolio.length / ITEMS_PER_PAGE);
+  const watchlistStartIndex = (watchlistPage - 1) * ITEMS_PER_PAGE;
+  const paginatedWatchlist = watchlistPortfolio.slice(watchlistStartIndex, watchlistStartIndex + ITEMS_PER_PAGE);
+
+  const scannerTotalPages = Math.ceil(scannerList.length / ITEMS_PER_PAGE);
+  const scannerStartIndex = (scannerPage - 1) * ITEMS_PER_PAGE;
+  const paginatedScanner = scannerList.slice(scannerStartIndex, scannerStartIndex + ITEMS_PER_PAGE);
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
@@ -161,13 +166,13 @@ function App() {
       <div className="main-nav-segmented">
         <button 
           className={mainView === 'SCANNER' ? 'active' : ''}
-          onClick={() => setMainView('SCANNER')}
+          onClick={() => { setMainView('SCANNER'); setScannerPage(1); }}
         >
           🔍 시장 스캐너
         </button>
         <button 
           className={mainView === 'MY_SPACE' ? 'active' : ''}
-          onClick={() => setMainView('MY_SPACE')}
+          onClick={() => { setMainView('MY_SPACE'); setWatchlistPage(1); }}
         >
           💼 마이 스페이스
         </button>
@@ -229,14 +234,34 @@ function App() {
             </div>
             
             <div className="stock-list" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {scannerList.length > 0 ? (
-                scannerList.map((item: any, idx: number) => (
+              {paginatedScanner.length > 0 ? (
+                paginatedScanner.map((item: any, idx: number) => (
                   <StockCard key={`scanner-${item.ticker}-${idx}`} stock={item} />
                 ))
               ) : (
                 <div className="no-data">조건을 통과한 매수 셋업이 없습니다.</div>
               )}
             </div>
+
+            {scannerTotalPages > 1 && (
+              <div className="pagination" style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '20px' }}>
+                <button 
+                  disabled={scannerPage === 1} 
+                  onClick={() => setScannerPage(p => Math.max(1, p - 1))}
+                  style={{ padding: '6px 12px', border: '1px solid #ccc', borderRadius: '4px', background: scannerPage === 1 ? '#f3f4f6' : 'white', cursor: scannerPage === 1 ? 'not-allowed' : 'pointer' }}
+                >
+                  이전
+                </button>
+                <span style={{ padding: '6px 12px' }}>{scannerPage} / {scannerTotalPages}</span>
+                <button 
+                  disabled={scannerPage === scannerTotalPages} 
+                  onClick={() => setScannerPage(p => Math.min(scannerTotalPages, p + 1))}
+                  style={{ padding: '6px 12px', border: '1px solid #ccc', borderRadius: '4px', background: scannerPage === scannerTotalPages ? '#f3f4f6' : 'white', cursor: scannerPage === scannerTotalPages ? 'not-allowed' : 'pointer' }}
+                >
+                  다음
+                </button>
+              </div>
+            )}
           </div>
         </div>
       ) : (
@@ -303,19 +328,19 @@ function App() {
                     <div className="no-data">즐겨찾기에 등록된 종목이 없습니다. 스캐너에서 ⭐ 버튼을 눌러 추가해보세요.</div>
                   )}
                </div>
-               {totalPages > 1 && (
+               {watchlistTotalPages > 1 && (
                   <div className="pagination">
                     <button 
-                      disabled={currentPage === 1} 
-                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={watchlistPage === 1} 
+                      onClick={() => setWatchlistPage(watchlistPage - 1)}
                       className="page-btn"
                     >
                       Previous
                     </button>
-                    <span className="page-info">Page {currentPage} of {totalPages}</span>
+                    <span className="page-info">Page {watchlistPage} of {watchlistTotalPages}</span>
                     <button 
-                      disabled={currentPage === totalPages} 
-                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={watchlistPage === watchlistTotalPages} 
+                      onClick={() => setWatchlistPage(watchlistPage + 1)}
                       className="page-btn"
                     >
                       Next

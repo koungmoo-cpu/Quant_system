@@ -246,7 +246,18 @@ class DBConnector:
         docs = self.db.collection('virtual_portfolio').stream()
         return [doc.to_dict() for doc in docs]
 
-    def update_virtual_portfolio_item(self, ticker: str, quantity: int, avgPrice: float, purchaseDate: str, strategy: Optional[str] = None, factor_score: float = 0) -> str:
+    def update_virtual_portfolio_item(
+        self, 
+        ticker: str, 
+        quantity: int, 
+        avgPrice: float, 
+        purchaseDate: str, 
+        strategy: Optional[str] = None, 
+        factor_score: float = 0,
+        setup: str = "",
+        spy_entry: float = 0,
+        qqq_entry: float = 0
+    ) -> str:
         if not self.db: return "error: no db"
         try:
             doc_ref = self.db.collection('virtual_portfolio').document(ticker)
@@ -256,7 +267,10 @@ class DBConnector:
                     "Quantity": quantity,
                     "AvgPrice": avgPrice,
                     "PurchaseDate": purchaseDate,
-                    "factor_score": factor_score
+                    "factor_score": factor_score,
+                    "setup": setup,
+                    "spy_entry": spy_entry,
+                    "qqq_entry": qqq_entry
                 }
                 if strategy:
                     data["Strategy"] = strategy
@@ -271,6 +285,7 @@ class DBConnector:
         if not self.db: return
         validated_trade = {
             "strategy": trade_data.get("strategy", ""),
+            "setup": trade_data.get("setup", ""),
             "entry_price": float(trade_data.get("entry_price", 0)),
             "exit_price": float(trade_data.get("exit_price", 0)),
             "profit_loss": float(trade_data.get("profit_loss", 0)),
@@ -280,6 +295,10 @@ class DBConnector:
             "exit_date": trade_data.get("exit_date", ""),
             "exit_reason": trade_data.get("exit_reason", ""),
             "factor_score": float(trade_data.get("factor_score", 0)),
+            "spy_entry": float(trade_data.get("spy_entry", 0)),
+            "qqq_entry": float(trade_data.get("qqq_entry", 0)),
+            "spy_exit": float(trade_data.get("spy_exit", 0)),
+            "qqq_exit": float(trade_data.get("qqq_exit", 0))
         }
         self.db.collection('virtual_trade_history').add(validated_trade)
 

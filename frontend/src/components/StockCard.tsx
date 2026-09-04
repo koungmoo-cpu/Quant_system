@@ -32,13 +32,20 @@ const StockCard: React.FC<Props> = ({ stock }) => {
     const today = new Date().toISOString().split('T')[0];
     
     try {
-      await updateOwnedAsset({
+      const assetData = {
         Ticker: stock.ticker,
         Quantity: quantity,
         AvgPrice: price,
-        PurchaseDate: today
-      });
-      alert(`포트폴리오에 ${stock.ticker} (${quantity}주) 추가 완료!`);
+        PurchaseDate: today,
+        Strategy: stock.strategy,
+        setup: stock.strategy,
+        factor_score: stock.score || 0
+      };
+      
+      await updateOwnedAsset(assetData);
+      await updateVirtualAsset(assetData); // 가상 포트폴리오 동시 편입
+      
+      alert(`실전 및 가상 포트폴리오에 ${stock.ticker} (${quantity}주) 추가 완료!`);
     } catch (e) {
       console.error(e);
       alert("포트폴리오 추가 실패");
@@ -70,7 +77,7 @@ const StockCard: React.FC<Props> = ({ stock }) => {
   }, [displayStock.ticker, displayStock.currentPrice, livePrice]);
 
 
-  const { watchlist, toggleWatchlist, removeTicker, updateOwnedAsset } = useStore();
+  const { watchlist, toggleWatchlist, removeTicker, updateOwnedAsset, updateVirtualAsset } = useStore();
   const isStarred = watchlist.includes(displayStock.ticker);
 
   const getActionColor = (action: string) => {
