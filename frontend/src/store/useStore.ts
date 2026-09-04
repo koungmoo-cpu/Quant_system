@@ -115,6 +115,13 @@ interface TradingState {
   fetchLatestScan: () => Promise<void>;
   
   initializeFavorites: () => Promise<void>;
+
+  virtualPortfolio: OwnedAsset[];
+  fetchVirtualPortfolio: () => Promise<void>;
+  updateVirtualAsset: (asset: OwnedAsset) => Promise<void>;
+  closeVirtualAsset: (ticker: string, sellPrice: number, sellQuantity: number, exitReason: string, strategy: string) => Promise<void>;
+  virtualPerformanceData: PerformanceData | null;
+  fetchVirtualPerformance: (initialCapital: number) => Promise<void>;
 }
 
 let API_BASE = 'https://ai-stock-backend-108832568469.asia-northeast3.run.app';
@@ -489,5 +496,91 @@ export const useStore = create<TradingState>((set, get) => ({
     await get().fetchWatchlist();
     // 2. Fetch the latest cached scan results and merge them
     await get().fetchLatestScan();
+  },
+
+  virtualPortfolio: [],
+  fetchVirtualPortfolio: async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/virtual/portfolio`);
+      if (res.ok) {
+        const data = await res.json();
+        const mappedAssets = (data || []).map((a: any) => ({
+          Ticker: String(a.Ticker || ''),
+          Quantity: Number(a.Quantity || 0),
+          AvgPrice: Number(a.AvgPrice || 0),
+          PurchaseDate: String(a.PurchaseDate || ''),
+          Strategy: String(a.Strategy || 'Manual'),
+          CurrentPrice: Number(a.CurrentPrice || 0),
+          trailingStop: Number(a.trailingStop || 0),
+          ma20: Number(a.ma20 || 0)
+        }));
+        const validAssets = mappedAssets.filter((a: OwnedAsset) => a.Ticker && a.Ticker.trim() !== '');
+        set({ virtualPortfolio: validAssets });
+      }
+    } catch (e) {
+      console.error("Failed to fetch virtual portfolio:", e);
+    }
+  },
+  
+  updateVirtualAsset: async (asset: OwnedAsset) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/virtual/portfolio/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ticker: asset.Ticker,
+          quantity: asset.Quantity,
+          avgPrice: asset.AvgPrice,
+          purchaseDate: asset.PurchaseDate,
+          strategy: asset.Strategy
+        })
+      });
+      if (res.ok) {
+        get().fetchVirtualPortfolio();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(`저장 실패: ${errData.detail || "오류가 발생했습니다."}`);
+      }
+    } catch (e) {
+      console.error("Failed to update virtual asset:", e);
+    }
+  },
+
+  closeVirtualAsset: async (ticker: string, sellPrice: number, sellQuantity: number, exitReason: string, strategy: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/virtual/portfolio/close`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ticker,
+          sell_price: sellPrice,
+          sell_quantity: sellQuantity,
+          exit_reason: exitReason,
+          strategy
+        })
+      });
+      if (res.ok) {
+        await get().fetchVirtualPortfolio();
+      } else {
+        const error = await res.json();
+        alert(`Error: ${error.detail || 'Failed to close position'}`);
+      }
+    } catch(e) {
+      console.error(e);
+      alert('Network error');
+    }
+  },
+
+  virtualPerformanceData: null,
+  fetchVirtualPerformance: async (initialCapital: number) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/virtual/performance?initial_capital=${initialCapital}`);
+      if (res.ok) {
+        const data = await res.json();
+        set({ virtualPerformanceData: data });
+      }
+    } catch (e) {
+      console.error("Failed to fetch virtual performance data:", e);
+    }
   }
 }))

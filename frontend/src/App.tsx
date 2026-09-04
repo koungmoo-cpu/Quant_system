@@ -5,6 +5,7 @@ import SectorHeatmap from './components/SectorHeatmap'
 import TradingPlaybook from './components/TradingPlaybook'
 import PortfolioTable from './components/PortfolioTable'
 import PerformanceStats from './components/PerformanceStats'
+import VirtualTrading from './components/VirtualTrading'
 import './App.css'
 
 function App() {
@@ -32,7 +33,7 @@ function App() {
   
   const [isPlaybookOpen, setIsPlaybookOpen] = useState(false);
   const [mainView, setMainView] = useState<'SCANNER' | 'MY_SPACE'>('SCANNER');
-  const [mySpaceTab, setMySpaceTab] = useState<'WATCHLIST' | 'PORTFOLIO' | 'STATISTICS'>('WATCHLIST');
+  const [mySpaceTab, setMySpaceTab] = useState<'WATCHLIST' | 'PORTFOLIO' | 'STATISTICS' | 'VIRTUAL'>('WATCHLIST');
 
   // Pagination for Watchlist tab
   const [currentPage, setCurrentPage] = useState(1);
@@ -242,8 +243,9 @@ function App() {
         <div className="my-space-view">
           <div className="tabs" style={{ justifyContent: 'center' }}>
             <button className={mySpaceTab === 'WATCHLIST' ? 'active' : ''} onClick={() => setMySpaceTab('WATCHLIST')}>⭐ 즐겨찾기</button>
-            <button className={mySpaceTab === 'PORTFOLIO' ? 'active' : ''} onClick={() => setMySpaceTab('PORTFOLIO')}>💼 포트폴리오</button>
-            <button className={mySpaceTab === 'STATISTICS' ? 'active' : ''} onClick={() => setMySpaceTab('STATISTICS')}>📈 계좌 성과</button>
+            <button className={mySpaceTab === 'PORTFOLIO' ? 'active' : ''} onClick={() => setMySpaceTab('PORTFOLIO')}>💼 실전 포트폴리오</button>
+            <button className={mySpaceTab === 'VIRTUAL' ? 'active' : ''} onClick={() => setMySpaceTab('VIRTUAL')}>🧪 가상 매매 (프워드)</button>
+            <button className={mySpaceTab === 'STATISTICS' ? 'active' : ''} onClick={() => setMySpaceTab('STATISTICS')}>📈 성과 요약</button>
           </div>
 
           {mySpaceTab === 'WATCHLIST' && (
@@ -329,6 +331,10 @@ function App() {
 
           {mySpaceTab === 'STATISTICS' && (
              <PerformanceStats />
+          )}
+
+          {mySpaceTab === 'VIRTUAL' && (
+             <VirtualTrading />
           )}
         </div>
       )}

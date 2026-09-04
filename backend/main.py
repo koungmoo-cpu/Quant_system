@@ -1010,3 +1010,88 @@ def cron_scan_sp500():
 async def get_scan_detected():
     data = db.get_latest_detected_setups()
     return data
+
+# ==========================================
+# Virtual Trading Endpoints
+# ==========================================
+@app.get("/api/virtual/portfolio")
+async def get_virtual_portfolio():
+    return db.get_virtual_portfolio()
+
+class VirtualPortfolioUpdateReq(BaseModel):
+    ticker: str
+    quantity: int
+    avgPrice: float
+    purchaseDate: str
+    strategy: Optional[str] = None
+    factor_score: Optional[float] = 0.0
+
+@app.post("/api/virtual/portfolio/update")
+async def update_virtual_portfolio(req: VirtualPortfolioUpdateReq):
+    result = db.update_virtual_portfolio_item(req.ticker, req.quantity, req.avgPrice, req.purchaseDate, req.strategy, req.factor_score)
+    if result == "success":
+        return {"status": "success"}
+    raise HTTPException(status_code=500, detail=result)
+
+class VirtualCloseReq(BaseModel):
+    ticker: str
+    sell_price: float
+    sell_quantity: int
+    exit_reason: str
+    strategy: str
+
+@app.post("/api/virtual/portfolio/close")
+async def close_virtual_position(req: VirtualCloseReq):
+    from datetime import datetime
+    import pytz
+    
+    portfolio = db.get_virtual_portfolio()
+    asset = next((item for item in portfolio if item.get("Ticker") == req.ticker), None)
+    
+    if not asset:
+        raise HTTPException(status_code=404, detail="Asset not found in virtual portfolio")
+    
+    current_quantity = asset.get("Quantity", 0)
+    if req.sell_quantity > current_quantity:
+        raise HTTPException(status_code=400, detail="Cannot sell more than owned")
+        
+    avg_price = asset.get("AvgPrice", 0)
+    profit_loss = (req.sell_price - avg_price) * req.sell_quantity
+    profit_rate = ((req.sell_price - avg_price) / avg_price * 100) if avg_price > 0 else 0
+    
+    now_str = datetime.now(pytz.timezone("Asia/Seoul")).strftime("%Y-%m-%d")
+    
+    trade_data = {
+        "ticker": req.ticker,
+        "strategy": req.strategy,
+        "entry_price": avg_price,
+        "exit_price": req.sell_price,
+        "profit_loss": profit_loss,
+        "profit_rate": profit_rate,
+        "quantity": req.sell_quantity,
+        "entry_date": asset.get("PurchaseDate", ""),
+        "exit_date": now_str,
+        "exit_reason": req.exit_reason,
+        "factor_score": asset.get("factor_score", 0)
+    }
+    
+    db.add_virtual_trade(trade_data)
+    
+    remaining = current_quantity - req.sell_quantity
+    db.update_virtual_portfolio_item(
+        req.ticker, 
+        remaining, 
+        avg_price, 
+        asset.get("PurchaseDate", ""),
+        asset.get("Strategy"),
+        asset.get("factor_score", 0)
+    )
+    
+    return {"status": "success", "message": f"Sold {req.sell_quantity} of {req.ticker} virtually"}
+
+@app.get("/api/virtual/performance")
+async def get_virtual_performance(initial_capital: float = 10000000):
+    trades = db.get_virtual_trade_history()
+    stats = performance_engine.calculate_account_metrics(trades, initial_capital)
+    return stats
+

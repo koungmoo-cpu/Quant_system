@@ -238,4 +238,55 @@ class DBConnector:
             return data
         return {"last_scanned_at": "", "total_scanned": 0, "detected_count": 0, "items": []}
 
+    # ==========================================
+    # Virtual Forward Trading (Paper Trading)
+    # ==========================================
+    def get_virtual_portfolio(self) -> List[Dict[str, Any]]:
+        if not self.db: return []
+        docs = self.db.collection('virtual_portfolio').stream()
+        return [doc.to_dict() for doc in docs]
+
+    def update_virtual_portfolio_item(self, ticker: str, quantity: int, avgPrice: float, purchaseDate: str, strategy: Optional[str] = None, factor_score: float = 0) -> str:
+        if not self.db: return "error: no db"
+        try:
+            doc_ref = self.db.collection('virtual_portfolio').document(ticker)
+            if quantity > 0:
+                data = {
+                    "Ticker": ticker,
+                    "Quantity": quantity,
+                    "AvgPrice": avgPrice,
+                    "PurchaseDate": purchaseDate,
+                    "factor_score": factor_score
+                }
+                if strategy:
+                    data["Strategy"] = strategy
+                doc_ref.set(data, merge=True)
+            else:
+                doc_ref.delete()
+            return "success"
+        except Exception as e:
+            return str(e)
+
+    def add_virtual_trade(self, trade_data: Dict[str, Any]) -> None:
+        if not self.db: return
+        validated_trade = {
+            "strategy": trade_data.get("strategy", ""),
+            "entry_price": float(trade_data.get("entry_price", 0)),
+            "exit_price": float(trade_data.get("exit_price", 0)),
+            "profit_loss": float(trade_data.get("profit_loss", 0)),
+            "profit_rate": float(trade_data.get("profit_rate", 0)),
+            "quantity": int(trade_data.get("quantity", 0)),
+            "entry_date": trade_data.get("entry_date", ""),
+            "exit_date": trade_data.get("exit_date", ""),
+            "exit_reason": trade_data.get("exit_reason", ""),
+            "factor_score": float(trade_data.get("factor_score", 0)),
+        }
+        self.db.collection('virtual_trade_history').add(validated_trade)
+
+    def get_virtual_trade_history(self) -> List[Dict[str, Any]]:
+        if not self.db: return []
+        docs = self.db.collection('virtual_trade_history').stream()
+        return [doc.to_dict() for doc in docs]
+
 db = DBConnector()
+
