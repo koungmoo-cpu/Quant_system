@@ -256,7 +256,10 @@ class DBConnector:
         factor_score: float = 0,
         setup: str = "",
         spy_entry: float = 0,
-        qqq_entry: float = 0
+        qqq_entry: float = 0,
+        is_half_sold: bool = False,
+        stop_price: float = 0.0,
+        target_price: float = 0.0
     ) -> str:
         if not self.db: return "error: no db"
         try:
@@ -270,7 +273,10 @@ class DBConnector:
                     "factor_score": factor_score,
                     "setup": setup,
                     "spy_entry": spy_entry,
-                    "qqq_entry": qqq_entry
+                    "qqq_entry": qqq_entry,
+                    "is_half_sold": is_half_sold,
+                    "stop_price": stop_price,
+                    "target_price": target_price
                 }
                 if strategy:
                     data["Strategy"] = strategy

@@ -1016,7 +1016,53 @@ async def get_scan_detected():
 # ==========================================
 @app.get("/api/virtual/portfolio")
 async def get_virtual_portfolio():
-    return db.get_virtual_portfolio()
+    items = db.get_virtual_portfolio()
+    
+    tickers = []
+    for item in items:
+        t = item.get("Ticker", item.get("ticker", ""))
+        if t and str(t).strip() and t not in tickers:
+            tickers.append(str(t).strip())
+            
+    if tickers:
+        try:
+            data = yf.download(tickers, period="1mo", progress=False)
+            if not data.empty and "Close" in data:
+                close_data = data["Close"]
+                for item in items:
+                    t = str(item.get("Ticker", item.get("ticker", ""))).strip()
+                    if t:
+                        try:
+                            if len(tickers) == 1:
+                                series = close_data
+                                if isinstance(series, pd.DataFrame):
+                                    series = series.iloc[:, 0]
+                            else:
+                                series = close_data[t]
+                                
+                            series = series.dropna()
+                            if len(series) > 0:
+                                current_price = float(series.iloc[-1])
+                                sma10 = float(series.tail(10).mean())
+                                sma20 = float(series.tail(20).mean()) if len(series) >= 20 else sma10
+                            else:
+                                current_price = 0.0
+                                sma10 = 0.0
+                                sma20 = 0.0
+                                
+                            item["CurrentPrice"] = round(current_price, 2)
+                            item["trailingStop"] = round(sma10, 2)
+                            item["ma20"] = round(sma20, 2)
+                            
+                        except Exception as e:
+                            print(f"Error processing virtual price for {t}: {e}")
+                            item["CurrentPrice"] = 0.0
+                            item["trailingStop"] = 0.0
+                            item["ma20"] = 0.0
+        except Exception as e:
+            print(f"Failed to fetch virtual portfolio prices: {e}")
+            
+    return items
 
 class VirtualPortfolioUpdateReq(BaseModel):
     ticker: str
@@ -1026,6 +1072,9 @@ class VirtualPortfolioUpdateReq(BaseModel):
     strategy: Optional[str] = None
     factor_score: Optional[float] = 0.0
     setup: Optional[str] = ""
+    is_half_sold: Optional[bool] = False
+    stop_price: Optional[float] = 0.0
+    target_price: Optional[float] = 0.0
 
 @app.post("/api/virtual/portfolio/update")
 async def update_virtual_portfolio(req: VirtualPortfolioUpdateReq):
@@ -1035,7 +1084,8 @@ async def update_virtual_portfolio(req: VirtualPortfolioUpdateReq):
 
     result = db.update_virtual_portfolio_item(
         req.ticker, req.quantity, req.avgPrice, req.purchaseDate, 
-        req.strategy, req.factor_score, req.setup, spy_entry, qqq_entry
+        req.strategy, req.factor_score, req.setup, spy_entry, qqq_entry,
+        req.is_half_sold, req.stop_price, req.target_price
     )
     if result == "success":
         return {"status": "success"}

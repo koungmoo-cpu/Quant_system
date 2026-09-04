@@ -45,6 +45,9 @@ export interface OwnedAsset {
   factor_score?: number;
   spy_entry?: number;
   qqq_entry?: number;
+  is_half_sold?: boolean;
+  stop_price?: number;
+  target_price?: number;
 }
 
 export interface PerformanceMetrics {
@@ -522,7 +525,10 @@ export const useStore = create<TradingState>((set, get) => ({
           setup: String(a.setup || a.Strategy || ''),
           factor_score: Number(a.factor_score || 0),
           spy_entry: Number(a.spy_entry || 0),
-          qqq_entry: Number(a.qqq_entry || 0)
+          qqq_entry: Number(a.qqq_entry || 0),
+          is_half_sold: Boolean(a.is_half_sold || false),
+          stop_price: Number(a.stop_price || 0),
+          target_price: Number(a.target_price || 0)
         }));
         const validAssets = mappedAssets.filter((a: OwnedAsset) => a.Ticker && a.Ticker.trim() !== '');
         set({ virtualPortfolio: validAssets });
@@ -544,7 +550,10 @@ export const useStore = create<TradingState>((set, get) => ({
           purchaseDate: asset.PurchaseDate,
           strategy: asset.Strategy,
           setup: asset.setup,
-          factor_score: asset.factor_score
+          factor_score: asset.factor_score,
+          is_half_sold: asset.is_half_sold || false,
+          stop_price: asset.stop_price || 0,
+          target_price: asset.target_price || 0
         })
       });
       if (res.ok) {

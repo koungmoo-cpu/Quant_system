@@ -144,6 +144,8 @@ const VirtualTrading: React.FC = () => {
               <th>Quantity</th>
               <th>Avg Price</th>
               <th>Current Price</th>
+              <th>1차 목표가</th>
+              <th>방어선 (Stop Price)</th>
               <th>Buy Score</th>
               <th>SPY/QQQ (Entry)</th>
               <th>Purchase Date</th>
@@ -157,6 +159,8 @@ const VirtualTrading: React.FC = () => {
                 <td><input type="text" value={editForm.setup || ''} onChange={e => setEditForm({ ...editForm, setup: e.target.value })} placeholder="VCP 등" style={{width: '90px'}}/></td>
                 <td><input type="number" value={editForm.Quantity} onChange={e => setEditForm({ ...editForm, Quantity: parseInt(e.target.value) || 0 })} style={{width: '60px'}}/></td>
                 <td><input type="number" value={editForm.AvgPrice} onChange={e => setEditForm({ ...editForm, AvgPrice: parseFloat(e.target.value) || 0 })} style={{width: '70px'}}/></td>
+                <td>-</td>
+                <td>-</td>
                 <td>-</td>
                 <td><input type="number" value={editForm.factor_score || 0} onChange={e => setEditForm({ ...editForm, factor_score: parseFloat(e.target.value) || 0 })} style={{width: '60px'}}/></td>
                 <td>-</td>
@@ -177,13 +181,15 @@ const VirtualTrading: React.FC = () => {
                 <td>{asset.Quantity}</td>
                 <td>${(asset.AvgPrice || 0).toFixed(2)}</td>
                 <td>${(asset.CurrentPrice || 0).toFixed(2)}</td>
+                <td style={{ color: '#10b981' }}>{asset.target_price ? `$${asset.target_price.toFixed(2)}` : '-'}</td>
+                <td style={{ color: '#ef4444' }}>{asset.stop_price ? `$${asset.stop_price.toFixed(2)}` : '-'}</td>
                 <td>{asset.factor_score || '-'}</td>
                 <td style={{ fontSize: '0.8rem', color: '#666' }}>
                   {asset.spy_entry ? `S: ${asset.spy_entry.toFixed(1)}` : '-'} / {asset.qqq_entry ? `Q: ${asset.qqq_entry.toFixed(1)}` : '-'}
                 </td>
                 <td>{asset.PurchaseDate}</td>
                 <td style={{ display: 'flex', gap: '4px' }}>
-                  <button className="close-btn" onClick={() => handleCloseInit(asset)} style={{ padding: '4px 8px', backgroundColor: '#8b5cf6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>가상 매도(청산)</button>
+                  <button className="close-btn" onClick={() => handleCloseInit(asset)} style={{ padding: '4px 8px', backgroundColor: '#8b5cf6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>수동 매도(Close)</button>
                   <button className="delete-btn" onClick={() => handleDelete(asset.Ticker)} style={{ padding: '4px 8px' }}>삭제</button>
                 </td>
               </tr>
