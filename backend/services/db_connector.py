@@ -12,6 +12,26 @@ class DBConnector:
             print(f"Warning: Firestore init failed (expected in local sandbox without ADC): {e}")
             self.db = None
             
+    def get_risk_rules(self) -> dict:
+        if not self.db: return {"min_factor_score": 8}
+        try:
+            doc = self.db.collection('settings').document('risk_rules').get()
+            if doc.exists:
+                return doc.to_dict()
+            return {"min_factor_score": 8}
+        except Exception as e:
+            print(f"Error fetching risk_rules: {e}")
+            return {"min_factor_score": 8}
+
+    def update_risk_rules(self, min_score: int) -> bool:
+        if not self.db: return False
+        try:
+            self.db.collection('settings').document('risk_rules').set({"min_factor_score": min_score}, merge=True)
+            return True
+        except Exception as e:
+            print(f"Error updating risk_rules: {e}")
+            return False
+            
     def get_universe_tickers(self) -> List[str]:
         if not self.db: return []
         docs = self.db.collection('universe').stream()

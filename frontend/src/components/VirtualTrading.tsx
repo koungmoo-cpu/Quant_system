@@ -12,7 +12,10 @@ const VirtualTrading: React.FC = () => {
     virtualPerformanceData,
     fetchVirtualPerformance,
     virtualHistory,
-    fetchVirtualHistory
+    fetchVirtualHistory,
+    minFactorScore,
+    fetchRiskRules,
+    updateRiskRules
   } = useStore();
 
   const [closingAsset, setClosingAsset] = useState<OwnedAsset | null>(null);
@@ -30,7 +33,8 @@ const VirtualTrading: React.FC = () => {
     fetchVirtualPortfolio();
     fetchVirtualPerformance(initialCapital);
     fetchVirtualHistory();
-  }, [fetchVirtualPortfolio, fetchVirtualPerformance, fetchVirtualHistory, initialCapital]);
+    fetchRiskRules();
+  }, [fetchVirtualPortfolio, fetchVirtualPerformance, fetchVirtualHistory, initialCapital, fetchRiskRules]);
 
   const handleCloseInit = (asset: OwnedAsset) => {
     setClosingAsset(asset);
@@ -84,6 +88,25 @@ const VirtualTrading: React.FC = () => {
 
   return (
     <div className="portfolio-container" style={{ marginTop: '20px' }}>
+      
+      {/* 0. Quick Filter Bar */}
+      <div className="quick-filter-bar" style={{ backgroundColor: '#f9fafb', padding: '16px', borderRadius: '8px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+        <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#1f2937' }}>⚙️ Quick Filter Settings</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+          <label style={{ fontWeight: 'bold', color: '#4b5563' }}>최소 진입 팩터 점수:</label>
+          <input 
+            type="range" 
+            min="0" 
+            max="20" 
+            value={minFactorScore} 
+            onChange={(e) => updateRiskRules(Number(e.target.value))}
+            style={{ flex: 1, maxWidth: '300px' }}
+          />
+          <span style={{ backgroundColor: '#10b981', color: 'white', padding: '4px 12px', borderRadius: '16px', fontWeight: 'bold' }}>
+            {minFactorScore} 점 이상 매수
+          </span>
+        </div>
+      </div>
       
       {/* 1. 성과 요약 (Performance Stats) */}
       <div className="perf-container" style={{ marginBottom: '30px' }}>

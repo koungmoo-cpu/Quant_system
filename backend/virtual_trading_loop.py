@@ -43,11 +43,16 @@ class TrailingStopSystem:
 
 
 # ======================================================================
-# Mock 가상 매매 루프 시뮬레이션
+# 가상 매매 루프 시뮬레이션
 # ======================================================================
 
 def run_virtual_trading_loop():
+    from backend.services.db_connector import DBConnector
+    db = DBConnector()
+    min_score = db.get_risk_rules().get('min_factor_score', 8)
+    
     print("\n🚀 [Virtual Trading Loop Simulation]")
+    print(f"▶ [RISK RULES]: Minimum Entry Factor Score = {min_score}")
     
     # 1. 진입가 $100.00, 100주
     system = TrailingStopSystem(entry_price=100.0, quantity=100)

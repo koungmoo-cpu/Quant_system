@@ -372,6 +372,7 @@ def analyze_ticker_fast(ticker: str):
     stop_loss = setup_data.get('stop_loss') or (current_price * 0.95)
     entry_pivot = setup_data.get('entry_pivot')
     
+
     if 'No Setup' in strategy_name or strategy_name == 'Data Error':
         action = "WAIT"
         details_list = setup_data.get('details', [])
@@ -1168,3 +1169,23 @@ async def get_virtual_performance(initial_capital: float = 10000000):
 async def get_virtual_history():
     return db.get_virtual_trade_history()
 
+# ==========================================
+# Settings (Risk Rules) Endpoints
+# ==========================================
+@app.get("/api/settings/risk_rules")
+async def get_risk_rules():
+    return db.get_risk_rules()
+
+class RiskRulesUpdateReq(BaseModel):
+    min_factor_score: int
+
+@app.post("/api/settings/risk_rules")
+async def update_risk_rules(req: RiskRulesUpdateReq):
+    success = db.update_risk_rules(req.min_factor_score)
+    if success:
+        return {"status": "success"}
+    raise HTTPException(status_code=500, detail="Failed to update risk rules")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

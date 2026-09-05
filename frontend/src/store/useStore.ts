@@ -97,7 +97,10 @@ interface TradingState {
   analyzeTicker: (ticker: string) => Promise<void>;
   analyzeTickerFast: (ticker: string) => Promise<void>;
   
-  isScanning: boolean;
+  scanTimestamp: string | null;
+  minFactorScore: number;
+  fetchRiskRules: () => Promise<void>;
+  updateRiskRules: (score: number) => Promise<void>;
   runGlobalScan: () => Promise<void>;
   
   removeTicker: (ticker: string) => void;
@@ -305,6 +308,36 @@ export const useStore = create<TradingState>((set, get) => ({
   },
 
   isScanning: false,
+  minFactorScore: 8,
+
+  fetchRiskRules: async () => {
+    try {
+      const res = await fetch(`${getApiBase()}/api/settings/risk_rules`);
+      if (res.ok) {
+        const data = await res.json();
+        set({ minFactorScore: data.min_factor_score || 8 });
+      }
+    } catch (err) {
+      console.error('fetchRiskRules error', err);
+    }
+  },
+
+  updateRiskRules: async (score: number) => {
+    try {
+      set({ minFactorScore: score });
+      const res = await fetch(`${getApiBase()}/api/settings/risk_rules`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ min_factor_score: score })
+      });
+      if (!res.ok) {
+        console.error('updateRiskRules failed');
+      }
+    } catch (err) {
+      console.error('updateRiskRules error', err);
+    }
+  },
+
   runGlobalScan: async () => {
     set({ isScanning: true });
     try {
