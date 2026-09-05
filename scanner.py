@@ -178,7 +178,7 @@ def get_gemini_master_signal(analyzed_data: dict) -> str:
     
     api_key = settings.google_genai_api_key
     if not api_key:
-        return "Error: GOOGLE_GENAI_API_KEY is not set. Cannot perform AI analysis."
+        return "[AI_Fallback] " + ", ".join(analyzed_data.get('details', []))
         
     client = genai.Client(api_key=api_key)
     
