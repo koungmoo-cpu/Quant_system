@@ -2,9 +2,11 @@ import random
 from typing import List, Dict
 
 class TrailingStopSystem:
-    def __init__(self, entry_price: float, quantity: int):
+    def __init__(self, entry_price: float, quantity: int, take_profit_pct: float = 15.0, trailing_stop_pct: float = 70.0):
         self.entry_price = entry_price
         self.quantity = quantity
+        self.take_profit_pct = take_profit_pct / 100.0
+        self.trailing_stop_pct = trailing_stop_pct / 100.0
         self.is_half_sold = False
         self.stop_price = entry_price * 0.95  # 초기 손절선 5%
 
@@ -18,20 +20,20 @@ class TrailingStopSystem:
         if profit_ratio <= -0.05 and not self.is_half_sold:
             return 'SELL_ALL'
 
-        # 2. 1차 목표가 도달 (15% 상승)
-        if profit_ratio >= 0.15 and not self.is_half_sold:
+        # 2. 1차 목표가 도달
+        if profit_ratio >= self.take_profit_pct and not self.is_half_sold:
             self.is_half_sold = True
             self.quantity = self.quantity // 2
             # 1차 익절 시 본전 방어선 설정
             self.stop_price = self.entry_price
             return 'SELL_HALF'
 
-        # 3. 트레일링 스탑 (70% 이익 보존)
+        # 3. 트레일링 스탑
         if self.is_half_sold:
             # 총수익 = 현재가 - 진입가
             profit = current_price - self.entry_price
             if profit > 0:
-                new_stop = self.entry_price + (profit * 0.70)
+                new_stop = self.entry_price + (profit * self.trailing_stop_pct)
                 if new_stop > self.stop_price:
                     self.stop_price = new_stop
             

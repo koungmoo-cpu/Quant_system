@@ -99,8 +99,12 @@ interface TradingState {
   
   scanTimestamp: string | null;
   minFactorScore: number;
+  autoBuyEnabled: boolean;
+  autoSellEnabled: boolean;
+  takeProfitPct: number;
+  trailingStopPct: number;
   fetchRiskRules: () => Promise<void>;
-  updateRiskRules: (score: number) => Promise<void>;
+  updateRiskRules: (updates: Partial<{min_factor_score: number, auto_buy_enabled: boolean, auto_sell_enabled: boolean, take_profit_pct: number, trailing_stop_pct: number}>) => Promise<void>;
   runGlobalScan: () => Promise<void>;
   
   removeTicker: (ticker: string) => void;
@@ -309,26 +313,52 @@ export const useStore = create<TradingState>((set, get) => ({
 
   isScanning: false,
   minFactorScore: 8,
+  autoBuyEnabled: false,
+  autoSellEnabled: false,
+  takeProfitPct: 15.0,
+  trailingStopPct: 70.0,
 
   fetchRiskRules: async () => {
     try {
       const res = await fetch(`${getApiBase()}/api/settings/risk_rules`);
       if (res.ok) {
         const data = await res.json();
-        set({ minFactorScore: data.min_factor_score || 8 });
+        set({ 
+          minFactorScore: data.min_factor_score ?? 8,
+          autoBuyEnabled: data.auto_buy_enabled ?? false,
+          autoSellEnabled: data.auto_sell_enabled ?? false,
+          takeProfitPct: data.take_profit_pct ?? 15.0,
+          trailingStopPct: data.trailing_stop_pct ?? 70.0,
+        });
       }
     } catch (err) {
       console.error('fetchRiskRules error', err);
     }
   },
 
-  updateRiskRules: async (score: number) => {
+  updateRiskRules: async (updates) => {
     try {
-      set({ minFactorScore: score });
+      const state = get();
+      const payload = {
+        min_factor_score: updates.min_factor_score ?? state.minFactorScore,
+        auto_buy_enabled: updates.auto_buy_enabled ?? state.autoBuyEnabled,
+        auto_sell_enabled: updates.auto_sell_enabled ?? state.autoSellEnabled,
+        take_profit_pct: updates.take_profit_pct ?? state.takeProfitPct,
+        trailing_stop_pct: updates.trailing_stop_pct ?? state.trailingStopPct,
+      };
+      
+      set({ 
+        minFactorScore: payload.min_factor_score,
+        autoBuyEnabled: payload.auto_buy_enabled,
+        autoSellEnabled: payload.auto_sell_enabled,
+        takeProfitPct: payload.take_profit_pct,
+        trailingStopPct: payload.trailing_stop_pct
+      });
+
       const res = await fetch(`${getApiBase()}/api/settings/risk_rules`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ min_factor_score: score })
+        body: JSON.stringify(payload)
       });
       if (!res.ok) {
         console.error('updateRiskRules failed');

@@ -22,10 +22,15 @@ def run_test():
         
     print(f"\n▶ [MARKET STATUS]: {market_status}")
     
-    # 2. Risk Rules (Min Score)
+    # 2. Risk Rules
     risk_rules = db.get_risk_rules()
     min_score = risk_rules.get('min_factor_score', 8)
-    print(f"▶ [RISK RULES]: Minimum Entry Factor Score = {min_score}")
+    auto_buy_enabled = risk_rules.get('auto_buy_enabled', False)
+    auto_sell_enabled = risk_rules.get('auto_sell_enabled', False)
+    take_profit_pct = risk_rules.get('take_profit_pct', 15.0)
+    trailing_stop_pct = risk_rules.get('trailing_stop_pct', 70.0)
+    print(f"▶ [RISK RULES]: Min Score={min_score}, Auto-Buy={auto_buy_enabled}, Auto-Sell={auto_sell_enabled}")
+    print(f"  - Take Profit: {take_profit_pct}%, Trailing Stop: {trailing_stop_pct}%")
     
     # 3. Process Exits (Trailing Stop)
     print("\n▶ [EXIT LOG] Assessing current holdings...")
@@ -44,7 +49,11 @@ def run_test():
         # Random price movement -10% to +20%
         mock_current_price = entry * (1 + random.uniform(-0.10, 0.20))
         
-        system = TrailingStopSystem(entry_price=entry, quantity=qty)
+        if not auto_sell_enabled:
+            active_items.append(ticker)
+            continue
+            
+        system = TrailingStopSystem(entry_price=entry, quantity=qty, take_profit_pct=take_profit_pct, trailing_stop_pct=trailing_stop_pct)
         # Restore state if exists
         system.is_half_sold = item.get('is_half_sold', False)
         system.stop_price = float(item.get('stop_price', entry * 0.95))
@@ -72,21 +81,35 @@ def run_test():
     available_slots = max_slots - len(active_items)
     print(f"  - 현재 가용 슬롯: {available_slots} / {max_slots}")
     
-    if available_slots > 0:
+    if not auto_buy_enabled:
+        print("  - ⚠️ 자동매수가 비활성화되어 있어 신규 진입을 건너뜁니다.")
+    elif available_slots > 0:
+        from datetime import datetime, timedelta
         # Fetch detected setups
         setups = db.get_latest_detected_setups()
         if setups and 'items' in setups:
-            candidates = setups['items']
-            # Filter by min_score
-            candidates = [c for c in candidates if c.get('score', 0) >= min_score and c.get('ticker') not in active_items]
-            candidates.sort(key=lambda x: x.get('score', 0), reverse=True)
-            
-            bought = candidates[:available_slots]
-            if bought:
-                for b in bought:
-                    print(f"  - ✅ 신규 매수: {b.get('ticker')} (Score: {b.get('score', 0)}, Price: ${b.get('current_price', 100):.2f})")
+            last_scanned = setups.get('last_scanned_at', '')
+            try:
+                # ISO format parse (approx)
+                scan_dt = datetime.fromisoformat(last_scanned.replace('Z', '+00:00'))
+                is_recent = (datetime.now(scan_dt.tzinfo) - scan_dt) < timedelta(hours=48)
+            except Exception:
+                is_recent = True # fallback
+                
+            if not is_recent:
+                print(f"  - ⚠️ 최근 스캔 데이터가 48시간 이상 지났습니다. (새로운 종목 아님, 스킵)")
             else:
-                print(f"  - 최소 점수({min_score}점)를 통과한 신규 진입 대상 종목이 없습니다.")
+                candidates = setups['items']
+                # Filter by min_score
+                candidates = [c for c in candidates if c.get('score', 0) >= min_score and c.get('ticker') not in active_items]
+                candidates.sort(key=lambda x: x.get('score', 0), reverse=True)
+                
+                bought = candidates[:available_slots]
+                if bought:
+                    for b in bought:
+                        print(f"  - ✅ 신규 매수: {b.get('ticker')} (Score: {b.get('score', 0)}, Price: ${b.get('current_price', 100):.2f})")
+                else:
+                    print(f"  - 최소 점수({min_score}점)를 통과한 신규 진입 대상 종목이 없습니다.")
         else:
             print("  - 최근 포착된 셋업이 없습니다.")
             

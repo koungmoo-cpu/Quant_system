@@ -13,20 +13,28 @@ class DBConnector:
             self.db = None
             
     def get_risk_rules(self) -> dict:
-        if not self.db: return {"min_factor_score": 8}
+        default_rules = {
+            "min_factor_score": 8,
+            "auto_buy_enabled": False,
+            "auto_sell_enabled": False,
+            "take_profit_pct": 15.0,
+            "trailing_stop_pct": 70.0
+        }
+        if not self.db: return default_rules
         try:
             doc = self.db.collection('settings').document('risk_rules').get()
             if doc.exists:
-                return doc.to_dict()
-            return {"min_factor_score": 8}
+                data = doc.to_dict()
+                return {**default_rules, **data}
+            return default_rules
         except Exception as e:
             print(f"Error fetching risk_rules: {e}")
-            return {"min_factor_score": 8}
+            return default_rules
 
-    def update_risk_rules(self, min_score: int) -> bool:
+    def update_risk_rules(self, risk_rules: dict) -> bool:
         if not self.db: return False
         try:
-            self.db.collection('settings').document('risk_rules').set({"min_factor_score": min_score}, merge=True)
+            self.db.collection('settings').document('risk_rules').set(risk_rules, merge=True)
             return True
         except Exception as e:
             print(f"Error updating risk_rules: {e}")

@@ -1178,10 +1178,14 @@ async def get_risk_rules():
 
 class RiskRulesUpdateReq(BaseModel):
     min_factor_score: int
+    auto_buy_enabled: bool = False
+    auto_sell_enabled: bool = False
+    take_profit_pct: float = 15.0
+    trailing_stop_pct: float = 70.0
 
 @app.post("/api/settings/risk_rules")
 async def update_risk_rules(req: RiskRulesUpdateReq):
-    success = db.update_risk_rules(req.min_factor_score)
+    success = db.update_risk_rules(req.dict())
     if success:
         return {"status": "success"}
     raise HTTPException(status_code=500, detail="Failed to update risk rules")

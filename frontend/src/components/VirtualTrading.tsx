@@ -14,6 +14,10 @@ const VirtualTrading: React.FC = () => {
     virtualHistory,
     fetchVirtualHistory,
     minFactorScore,
+    autoBuyEnabled,
+    autoSellEnabled,
+    takeProfitPct,
+    trailingStopPct,
     fetchRiskRules,
     updateRiskRules
   } = useStore();
@@ -90,21 +94,56 @@ const VirtualTrading: React.FC = () => {
     <div className="portfolio-container" style={{ marginTop: '20px' }}>
       
       {/* 0. Quick Filter Bar */}
-      <div className="quick-filter-bar" style={{ backgroundColor: '#f9fafb', padding: '16px', borderRadius: '8px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-        <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#1f2937' }}>⚙️ Quick Filter Settings</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-          <label style={{ fontWeight: 'bold', color: '#4b5563' }}>최소 진입 팩터 점수:</label>
-          <input 
-            type="range" 
-            min="0" 
-            max="20" 
-            value={minFactorScore} 
-            onChange={(e) => updateRiskRules(Number(e.target.value))}
-            style={{ flex: 1, maxWidth: '300px' }}
-          />
-          <span style={{ backgroundColor: '#10b981', color: 'white', padding: '4px 12px', borderRadius: '16px', fontWeight: 'bold' }}>
-            {minFactorScore} 점 이상 매수
-          </span>
+      <div className="quick-filter-bar" style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '12px', marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb' }}>
+        <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          ⚙️ 자동 매매 및 필터 설정
+        </h3>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          {/* 매수 설정 */}
+          <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <strong style={{ color: '#334155' }}>[자동 매수]</strong>
+              <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                <input type="checkbox" checked={autoBuyEnabled} onChange={(e) => updateRiskRules({ auto_buy_enabled: e.target.checked })} style={{ width: '18px', height: '18px', marginRight: '8px' }} />
+                <span style={{ fontSize: '0.9rem', color: autoBuyEnabled ? '#10b981' : '#94a3b8', fontWeight: 'bold' }}>
+                  {autoBuyEnabled ? 'ON (최근 48H 신규 종목 매수)' : 'OFF'}
+                </span>
+              </label>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <label style={{ fontSize: '0.9rem', color: '#475569', minWidth: '110px' }}>최소 진입 점수:</label>
+              <input type="range" min="0" max="20" value={minFactorScore} onChange={(e) => updateRiskRules({ min_factor_score: Number(e.target.value) })} style={{ flex: 1 }} />
+              <span style={{ backgroundColor: '#10b981', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 'bold' }}>{minFactorScore}점</span>
+            </div>
+          </div>
+
+          {/* 매도 설정 */}
+          <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <strong style={{ color: '#334155' }}>[자동 매도]</strong>
+              <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                <input type="checkbox" checked={autoSellEnabled} onChange={(e) => updateRiskRules({ auto_sell_enabled: e.target.checked })} style={{ width: '18px', height: '18px', marginRight: '8px' }} />
+                <span style={{ fontSize: '0.9rem', color: autoSellEnabled ? '#ef4444' : '#94a3b8', fontWeight: 'bold' }}>
+                  {autoSellEnabled ? 'ON (조건 도달 시 즉시 청산)' : 'OFF'}
+                </span>
+              </label>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <label style={{ fontSize: '0.9rem', color: '#475569', minWidth: '140px' }}>1차 익절(절반 매도):</label>
+                <input type="number" value={takeProfitPct} onChange={(e) => updateRiskRules({ take_profit_pct: Number(e.target.value) })} style={{ width: '70px', padding: '4px 8px', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
+                <span style={{ fontSize: '0.9rem', color: '#64748b' }}>% 달성 시</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <label style={{ fontSize: '0.9rem', color: '#475569', minWidth: '140px' }}>트레일링 스탑 보존:</label>
+                <input type="number" value={trailingStopPct} onChange={(e) => updateRiskRules({ trailing_stop_pct: Number(e.target.value) })} style={{ width: '70px', padding: '4px 8px', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
+                <span style={{ fontSize: '0.9rem', color: '#64748b' }}>% (최고점 대비)</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       
