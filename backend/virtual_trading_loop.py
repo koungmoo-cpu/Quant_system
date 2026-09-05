@@ -57,6 +57,8 @@ def execute_virtual_trading_cycle(db_connector):
     1. Auto-Sell 평가 및 처리
     2. Auto-Buy 평가 및 처리
     """
+    from backend.services.notifier import send_discord_alert
+    
     print("\n" + "="*50)
     print("🚀 [Virtual Trading Engine Cycle Started]")
     
@@ -176,8 +178,18 @@ def execute_virtual_trading_cycle(db_connector):
                 if remaining > 0:
                     active_items.append(ticker)
                     print(f"  - ✅ {ticker} [SELL_HALF] 1차 익절 (잔여 {remaining}주)")
+                    send_discord_alert(
+                        title=f"💸 [가상 매매] 1차 익절: {ticker}",
+                        description=f"목표가 15% 도달로 절반 매도 처리되었습니다.\n\n수익금: +${profit_loss:.2f} ({profit_rate:.2f}%)",
+                        color=0x2ecc71
+                    )
                 else:
                     print(f"  - 🛑 {ticker} [{action}] 전략 청산 완료")
+                    send_discord_alert(
+                        title=f"🛑 [가상 매매] 전량 청산: {ticker}",
+                        description=f"방어선 이탈로 전량 매도(청산) 처리되었습니다.\n\n수익/손실금: ${profit_loss:.2f} ({profit_rate:.2f}%)",
+                        color=0xe74c3c if profit_loss < 0 else 0x2ecc71
+                    )
             else:
                 active_items.append(ticker)
                 # 트레일링 스탑 상태 (stop_price 상승) 지속 업데이트
@@ -246,6 +258,11 @@ def execute_virtual_trading_cycle(db_connector):
                             qqq_entry=qqq_entry
                         )
                         print(f"  - ✅ 신규 매수: {ticker} ({qty}주 @ ${price:.2f}, Score: {b.get('score', 0)})")
+                        send_discord_alert(
+                            title=f"🛒 [가상 매매] 신규 매수: {ticker}",
+                            description=f"조건 부합으로 자동 편입되었습니다.\n\n수량: {qty}주\n진입가: ${price:.2f}\n전략: {b.get('strategy', 'AI_Setup')}",
+                            color=0x3498db
+                        )
                 else:
                     print(f"  - 최소 점수({min_score}점)를 통과한 신규 진입 대상 종목이 없습니다.")
     else:
