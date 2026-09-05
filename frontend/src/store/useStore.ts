@@ -96,6 +96,7 @@ interface TradingState {
   isAnalyzing: boolean;
   analyzeTicker: (ticker: string) => Promise<void>;
   analyzeTickerFast: (ticker: string) => Promise<void>;
+  isScanning: boolean;
   
   scanTimestamp: string | null;
   minFactorScore: number;
@@ -123,7 +124,6 @@ interface TradingState {
   fetchPerformanceData: (initialCapital: number) => Promise<void>;
   
 
-  scanTimestamp: string | null;
   detectedSetups: any | null;
   fetchDetectedSetups: () => Promise<void>;
   fetchLatestScan: () => Promise<void>;
@@ -320,7 +320,7 @@ export const useStore = create<TradingState>((set, get) => ({
 
   fetchRiskRules: async () => {
     try {
-      const res = await fetch(`${getApiBase()}/api/settings/risk_rules`);
+      const res = await fetch(`${API_BASE}/api/settings/risk_rules`);
       if (res.ok) {
         const data = await res.json();
         set({ 
@@ -355,7 +355,7 @@ export const useStore = create<TradingState>((set, get) => ({
         trailingStopPct: payload.trailing_stop_pct
       });
 
-      const res = await fetch(`${getApiBase()}/api/settings/risk_rules`, {
+      const res = await fetch(`${API_BASE}/api/settings/risk_rules`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
