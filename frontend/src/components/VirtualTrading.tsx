@@ -239,7 +239,7 @@ const VirtualTrading: React.FC = () => {
             ) : paginatedPortfolio.map(asset => (
               <tr key={asset.Ticker}>
                 <td className="ticker-col">{asset.Ticker}</td>
-                <td><span className="strategy-badge">{asset.setup || asset.Strategy}</span></td>
+                <td><span className="strategy-badge">{asset.Strategy}</span></td>
                 <td>{asset.Quantity}</td>
                 <td>${(asset.AvgPrice || 0).toFixed(2)}</td>
                 <td>${(asset.CurrentPrice || 0).toFixed(2)}</td>

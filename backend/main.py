@@ -640,6 +640,13 @@ async def cron_daily_scan():
                     "inline": False
                 })
             
+        # 가상 매매 루프 자동 실행
+        from virtual_trading_loop import execute_virtual_trading_cycle
+        try:
+            execute_virtual_trading_cycle(db)
+        except Exception as e:
+            print(f"Error executing virtual trading cycle after daily scan: {e}")
+            
         return {"status": "success", "found": len(buy_list)}
     except Exception as e:
 
@@ -763,6 +770,13 @@ async def cron_intraday_scan():
         if latest_results:
             db.save_scan_results(latest_results, now_str)
         
+        # 가상 매매 루프 자동 실행
+        from virtual_trading_loop import execute_virtual_trading_cycle
+        try:
+            execute_virtual_trading_cycle(db)
+        except Exception as e:
+            print(f"Error executing virtual trading cycle after intraday scan: {e}")
+            
         return {
             "status": "success", 
             "prices_fetched": len(price_map), 
@@ -825,6 +839,7 @@ async def seed_universe(req: SeedDataReq):
                 
         doc_ref = db.db.collection('settings').document('favorites')
         doc_ref.set({"tickers": tickers}, merge=True)
+        
         return {"status": "success", "message": f"Seeded {count} items"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -1003,6 +1018,13 @@ def cron_scan_sp500():
         # scan_results/latest (및 scan_history) 에도 전체 결과 저장
         db.save_scan_results(all_results, now_str)
         
+        # 가상 매매 루프 자동 실행
+        from virtual_trading_loop import execute_virtual_trading_cycle
+        try:
+            execute_virtual_trading_cycle(db)
+        except Exception as e:
+            print(f"Error executing virtual trading cycle after SP500 scan: {e}")
+            
         return {"status": "success", "data": schema_data}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -1015,6 +1037,18 @@ async def get_scan_detected():
 # ==========================================
 # Virtual Trading Endpoints
 # ==========================================
+@app.get("/api/cron/virtual-loop")
+def cron_virtual_loop():
+    """
+    수동 또는 단독 스케줄러로 가상 매매 엔진 사이클을 강제 1회 실행합니다.
+    """
+    from virtual_trading_loop import execute_virtual_trading_cycle
+    try:
+        execute_virtual_trading_cycle(db)
+        return {"status": "success", "message": "Virtual trading cycle executed"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/virtual/portfolio")
 async def get_virtual_portfolio():
     items = db.get_virtual_portfolio()
